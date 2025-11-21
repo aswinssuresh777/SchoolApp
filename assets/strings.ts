@@ -1,10 +1,10 @@
 export const Strings = {
   // App Title
-  APP_TITLE: 'ArivAI',
+  APP_TITLE: 'Arivu AI',
 
   // Login Screen
   LOGIN: {
-    TITLE: 'ArivAI',
+    TITLE: 'Arivu AI',
     EMAIL_PLACEHOLDER: 'Email',
     PASSWORD_PLACEHOLDER: 'Password',
     LOGIN_BUTTON: 'Login',

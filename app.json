@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "ArivAI",
+    "name": "Arivu AI",
     "slug": "SchoolApp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "schoolapp",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true

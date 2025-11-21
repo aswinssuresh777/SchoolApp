@@ -1,8 +1,12 @@
+import { URLS } from '@/constants/urls';
+import { apiClient } from '@/services/api';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   ImageBackground,
   Keyboard,
   KeyboardAvoidingView,
@@ -33,13 +37,18 @@ interface FormData {
   confirmPassword: string;
   dob: Date;
   gender: string;
-  board: string;
+  board_name: string;
+  board_id: string;
   class: string;
+  class_id:string;
 }
 
 export default function RegisterScreen() {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [allBoardsData, setAllBoardsData] = useState([]);
+  const [allClassesData, setAllClassesData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Keyboard event listeners
   useEffect(() => {
@@ -61,11 +70,49 @@ export default function RegisterScreen() {
 
   // Ensure keyboard aware scroll on mount
   React.useEffect(() => {
+    callApi();
     if (Platform.OS === 'android') {
       StatusBar.setBackgroundColor('#f5f6fa');
       StatusBar.setBarStyle('dark-content');
     }
   }, []);
+
+
+  const callApi = async () => {
+    setIsLoading(true);
+    try {
+      const response = await apiClient.get(URLS.GET_BOARDS);
+      if(!(response as any).error){
+        const activeBoards = (response as any).boards.filter(
+          (board: any) => board.is_active
+        );
+        setAllBoardsData(activeBoards);
+      }
+      setIsLoading(false);
+      console.log(response);
+    } catch (error) {
+      console.error('Error calling API:', error);
+    }
+  };
+
+const getClassesData = async (board_id:any)=>{
+  try{
+    const response = await apiClient.get(URLS.GET_CLASSES(board_id)); // 👈 pass boardId here
+    console.log('Classes:', response,URLS.GET_CLASSES(board_id));
+    if(!(response as any).error){
+      const activeClasses = (response as any).classes.filter(
+        (cls: any) => cls.is_active
+      );
+
+      setAllClassesData(activeClasses);
+    }
+    console.log(response);
+  }catch(error){
+
+  }
+}
+
+
   const router = useRouter();
   const { setUserData, setLoading } = useUser();
   const [formData, setFormData] = useState<FormData>({
@@ -79,6 +126,8 @@ export default function RegisterScreen() {
     gender: '',
     board: '',
     class: '',
+    class_id:'',
+    board_id:'',
   });
   
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -301,8 +350,8 @@ export default function RegisterScreen() {
     const confirmPasswordValid = formData.confirmPassword && !validateConfirmPassword(formData.confirmPassword);
     const dobValid = !showDatePlaceholder;
     const genderValid = formData.gender && !validateGender(formData.gender);
-    const boardValid = formData.board && !validateBoard(formData.board);
-    const classValid = formData.class && !validateClass(formData.class);
+    const boardValid = formData.board_id && !validateBoard(formData.board_id);
+    const classValid = formData.class_id && !validateClass(formData.class_id);
     
     // Count valid fields
     if (firstNameValid) completedFields++;
@@ -318,25 +367,13 @@ export default function RegisterScreen() {
 
     const progress = completedFields / totalFields;
     
-    console.log('Progress Calculation:');
-    console.log('- First Name:', firstNameValid, formData.first_name);
-    console.log('- Last Name:', lastNameValid, formData.last_name);
-    console.log('- Student Code:', studentCodeValid, formData.student_code);
-    console.log('- Email:', emailValid, formData.email);
-    console.log('- Password:', passwordValid, formData.password);
-    console.log('- Confirm Password:', confirmPasswordValid, formData.confirmPassword);
-    console.log('- DOB:', dobValid, !showDatePlaceholder);
-    console.log('- Gender:', genderValid, formData.gender);
-    console.log('- Board:', boardValid, formData.board);
-    console.log('- Class:', classValid, formData.class);
-    console.log('Total:', completedFields, '/', totalFields, '=', progress);
 
     return progress;
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+    console.log('form_data',formData)
     // Check all fields are filled
     if (!formData.first_name) newErrors.first_name = 'First name is required';
     if (!formData.last_name) newErrors.last_name = 'Last name is required';
@@ -346,8 +383,8 @@ export default function RegisterScreen() {
     if (!formData.confirmPassword) newErrors.confirmPassword = Strings.VALIDATION.CONFIRM_PASSWORD_REQUIRED;
     if (showDatePlaceholder) newErrors.dob = Strings.VALIDATION.DOB_REQUIRED;
     if (!formData.gender) newErrors.gender = 'Gender is required';
-    if (!formData.board) newErrors.board = Strings.VALIDATION.BOARD_REQUIRED;
-    if (!formData.class) newErrors.class = Strings.VALIDATION.CLASS_REQUIRED;
+    if (!formData.board_id) newErrors.board = Strings.VALIDATION.BOARD_REQUIRED;
+    if (!formData.class_id) newErrors.class = Strings.VALIDATION.CLASS_REQUIRED;
     
     // If all fields are filled, validate their content
     if (formData.first_name) {
@@ -385,13 +422,13 @@ export default function RegisterScreen() {
       if (genderError) newErrors.gender = genderError;
     }
 
-    if (formData.board) {
-      const boardError = validateBoard(formData.board);
+    if (formData.board_id) {
+      const boardError = validateBoard(formData.board_id);
       if (boardError) newErrors.board = boardError;
     }
 
-    if (formData.class) {
-      const classError = validateClass(formData.class);
+    if (formData.class_id) {
+      const classError = validateClass(formData.class_id);
       if (classError) newErrors.class = classError;
     }
 
@@ -405,48 +442,67 @@ export default function RegisterScreen() {
       if (!validateForm()) {
         return;
       }
-
+  
       setLoading(true);
-
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Store user data in context (simulating successful API response)
+  
       const userData = {
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        student_code: formData.student_code,
-        email: formData.email,
-        password: formData.password,
-        dob: formData.dob,
-        gender: formData.gender,
-        board: formData.board,
-        class: formData.class,
-        isLoggedIn: true,
+        first_name: formData?.first_name,
+        last_name: formData?.last_name,
+        email: formData?.email,
+        password: formData?.password,
+        student_code: formData?.student_code,
+        date_of_birth: formData?.dob,
+        gender: formData?.gender,
+        class_id: formData?.class_id,
+        board_id: formData?.board_id,
       };
-
-      setUserData(userData);
-      
-      // Show success modal
-      setShowSuccessModal(true);
-      
-      // After 2 seconds, navigate to home
-      setTimeout(() => {
-        setShowSuccessModal(false);
+  console.log('userData',userData)
+      // Call the registration API
+      const response = await apiClient.post(URLS.REGISTER, userData);
+  console.log(response)
+      // Check if API call was successful
+      if (!(response as any)?.error) {
+        setUserData(userData); // Save user data if needed
+        setShowSuccessModal(true); // Show success modal
+        await AsyncStorage.setItem('userToken',response?.token);
+        await AsyncStorage.setItem('userData',JSON.stringify(response?.student));
+        // Navigate to home after 2 seconds
+        setTimeout(() => {
+          setShowSuccessModal(false);
+          setLoading(false);
+          router.replace('/(home)');
+        }, 2000);
+      } else {
+        setUserData(userData); // Save user data if needed
+        setShowSuccessModal(true); // Show success modal
+        await AsyncStorage.setItem('userToken',response?.token);
+        await AsyncStorage.setItem('userData',JSON.stringify(response?.student));
+        // Handle API failure
         setLoading(false);
-        router.replace('/(home)');
-      }, 2000);
-      
+        console.error('Registration failed:', (response as any)?.message || 'Unknown error');
+        // Optionally show error to user
+      }
+  
     } catch (error) {
-      console.error('Registration failed:', error);
+      console.error('Registration API error:', error);
       setLoading(false);
+      // Optionally show error modal/message
     }
   };
+  
 
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* <StatusBar barStyle="dark-content" backgroundColor="#f5f6fa" /> */}
       {/* Progress header */}
+      {isLoading?
+       <View style={{
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}>
+        <ActivityIndicator size="large" color="#2e86de" />
+      </View>:
+      <>
       <View style={[
         styles.progressHeader,
         calculateProgress() === 1 && styles.progressHeaderComplete
@@ -464,7 +520,7 @@ export default function RegisterScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         enabled
       >
         <TouchableWithoutFeedback onPress={() => {
@@ -474,7 +530,7 @@ export default function RegisterScreen() {
           <ScrollView 
             contentContainerStyle={[
               styles.scrollView,
-              // isKeyboardVisible && { paddingBottom: keyboardHeight + 20 }
+              // isKeyboardVisible && { paddingBottom: keyboardHeight + 50 }
             ]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
@@ -483,6 +539,7 @@ export default function RegisterScreen() {
             keyboardDismissMode="interactive"
             nestedScrollEnabled={true}
             scrollEventThrottle={16}
+            style={{ flex: 1 }}
           >
           <View style={styles.progressContainer} key={progressKey}>
             {/* <CustomProgressBar
@@ -500,6 +557,7 @@ export default function RegisterScreen() {
             <TextInput
               style={[styles.input, errors.first_name && styles.inputError]}
               placeholder="First Name"
+               placeholderTextColor="grey"
               value={formData.first_name}
               onChangeText={(text) => {
                 setFormData({ ...formData, first_name: text });
@@ -523,6 +581,7 @@ export default function RegisterScreen() {
             <TextInput
               style={[styles.input, errors.last_name && styles.inputError]}
               placeholder="Last Name"
+              placeholderTextColor="grey"
               value={formData.last_name}
               onChangeText={(text) => {
                 setFormData({ ...formData, last_name: text });
@@ -546,6 +605,7 @@ export default function RegisterScreen() {
             <TextInput
               style={[styles.input, errors.student_code && styles.inputError]}
               placeholder="Student Code"
+              placeholderTextColor="grey"
               value={formData.student_code}
               onChangeText={(text) => {
                 setFormData({ ...formData, student_code: text });
@@ -599,7 +659,7 @@ export default function RegisterScreen() {
           <View style={styles.inputContainer}>
             <Text style={styles.labelText}>Gender</Text>
             <View style={styles.radioContainer}>
-              {genderOptions.map((option, index) => (
+              {genderOptions?.map((option, index) => (
                 <TouchableOpacity
                   key={index}
                   style={styles.radioOption}
@@ -638,8 +698,8 @@ export default function RegisterScreen() {
               }}
             >
               <View style={styles.dropdownInput}>
-                <Text style={formData.board ? styles.inputText : styles.placeholderText}>
-                  {formData.board || Strings.REGISTER.BOARD_PLACEHOLDER}
+                <Text style={formData.board_name ? styles.inputText : styles.placeholderText}>
+                  {formData.board_name || Strings.REGISTER.BOARD_PLACEHOLDER}
                 </Text>
                 <Ionicons 
                   name={showBoardDropdown ? 'chevron-up' : 'chevron-down'} 
@@ -649,34 +709,40 @@ export default function RegisterScreen() {
               </View>
             </TouchableOpacity>
             {showBoardDropdown && (
-              <View style={styles.dropdown}>
-                <ScrollView 
-                  style={styles.dropdownScroll}
-                  showsVerticalScrollIndicator={true}
-                  bounces={false}
-                  nestedScrollEnabled={true}
-                >
-                  {boardOptions.map((option, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.dropdownItem,
-                        index === boardOptions.length - 1 && styles.dropdownItemLast
-                      ]}
-                      onPress={() => {
-                        setFormData({ ...formData, board: option });
-                        closeAllDropdowns();
-                        if (errors.board) {
-                          setErrors(prev => ({ ...prev, board: '' }));
-                        }
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{option}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
+  <View style={styles.dropdown}>
+    <ScrollView
+      style={styles.dropdownScroll}
+      showsVerticalScrollIndicator={true}
+      bounces={false}
+      nestedScrollEnabled={true}
+    >
+      {allBoardsData.map((option, index) => (
+        <TouchableOpacity
+          key={index}
+          style={[
+            styles.dropdownItem,
+            index === allBoardsData.length - 1 && styles.dropdownItemLast
+          ]}
+          onPress={() => {
+            setFormData({
+              ...formData,
+              board_id: option.board_id,    
+              board_name: option.board_name, 
+            }); 
+            getClassesData(option.board_id);
+            closeAllDropdowns();
+            if (errors.board) {
+              setErrors(prev => ({ ...prev, board: '' }));
+            }
+          }}
+        >
+          <Text style={styles.dropdownItemText}>{option.board_name}</Text>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  </View>
+)}
+
             {errors.board && <Text style={styles.errorText}>{errors.board}</Text>}
           </View>
 
@@ -698,8 +764,8 @@ export default function RegisterScreen() {
               }}
             >
               <View style={styles.dropdownInput}>
-                <Text style={formData.class ? styles.inputText : styles.placeholderText}>
-                  {formData.class || Strings.REGISTER.CLASS_PLACEHOLDER}
+                <Text style={formData?.class_name ? styles.inputText : styles.placeholderText}>
+                  {formData?.class_name || Strings.REGISTER.CLASS_PLACEHOLDER}
                 </Text>
                 <Ionicons 
                   name={showClassDropdown ? 'chevron-up' : 'chevron-down'} 
@@ -709,34 +775,39 @@ export default function RegisterScreen() {
               </View>
             </TouchableOpacity>
             {showClassDropdown && (
-              <View style={styles.dropdown}>
-                <ScrollView 
-                  style={styles.dropdownScroll}
-                  showsVerticalScrollIndicator={true}
-                  bounces={false}
-                  nestedScrollEnabled={true}
-                >
-                  {classOptions.map((option, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.dropdownItem,
-                        index === classOptions.length - 1 && styles.dropdownItemLast
-                      ]}
-                      onPress={() => {
-                        setFormData({ ...formData, class: option });
-                        closeAllDropdowns();
-                        if (errors.class) {
-                          setErrors(prev => ({ ...prev, class: '' }));
-                        }
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{option}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
+  <View style={styles.dropdown}>
+    <ScrollView
+      style={styles.dropdownScroll}
+      showsVerticalScrollIndicator={true}
+      bounces={false}
+      nestedScrollEnabled={true}
+    >
+      {allClassesData?.map((option, index) => (
+        <TouchableOpacity
+          key={index}
+          style={[
+            styles.dropdownItem,
+            index === allClassesData?.length - 1 && styles.dropdownItemLast
+          ]}
+          onPress={() => {
+            setFormData({
+              ...formData,
+              class_id: option.class_id,     
+              class_name: option.class_name, 
+            });
+            closeAllDropdowns();
+            if (errors.class) {
+              setErrors(prev => ({ ...prev, class: '' }));
+            }
+          }}
+        >
+          <Text style={styles.dropdownItemText}>{option.class_name}</Text>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  </View>
+)}
+
             {errors.class && <Text style={styles.errorText}>{errors.class}</Text>}
           </View>
 
@@ -745,6 +816,7 @@ export default function RegisterScreen() {
             <TextInput
               style={[styles.input, errors.email && styles.inputError]}
               placeholder={Strings.REGISTER.EMAIL_PLACEHOLDER}
+              placeholderTextColor="grey"
               value={formData.email}
               onChangeText={(text) => {
                 setFormData({ ...formData, email: text });
@@ -762,6 +834,7 @@ export default function RegisterScreen() {
             <TextInput
               style={[styles.input, errors.password && styles.inputError]}
               placeholder={Strings.REGISTER.PASSWORD_PLACEHOLDER}
+              placeholderTextColor="grey"
               value={formData.password}
               onChangeText={(text) => {
                 setFormData({ ...formData, password: text });
@@ -796,6 +869,7 @@ export default function RegisterScreen() {
               ref={confirmPasswordRef}
               style={[styles.input, errors.confirmPassword && styles.inputError]}
               placeholder={Strings.REGISTER.CONFIRM_PASSWORD_PLACEHOLDER}
+              placeholderTextColor="grey"
               value={formData.confirmPassword}
               onChangeText={(text) => {
                 setFormData({ ...formData, confirmPassword: text });
@@ -861,6 +935,8 @@ export default function RegisterScreen() {
       </Modal>
     </KeyboardAvoidingView>
     </ImageBackground>
+    </>
+}
     </SafeAreaView>
   );
 }
@@ -884,7 +960,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flexGrow: 1,
-     paddingBottom: 60, // more space so button stays visible
+    paddingBottom: 80, // more space so button stays visible
     // minHeight: Dimensions.get('window').height - 100,
   },
   content: {
@@ -926,7 +1002,7 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     fontSize: 16,
-    color: Colors.TEXT_SECONDARY,
+    color: 'grey',
     flex: 1,
   },
   errorText: {

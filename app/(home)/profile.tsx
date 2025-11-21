@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../assets/colors';
@@ -11,7 +10,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { state, clearUserData } = useUser();
   const { userData } = state;
-
+console.log('userData',userData);
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('userToken');
@@ -43,43 +42,45 @@ export default function ProfileScreen() {
           
           <View style={styles.infoRow}>
             <Text style={styles.label}>Name:</Text>
-            <Text style={styles.value}>{userData.first_name} {userData.last_name}</Text>
+            <Text style={styles.value}>{userData?.first_name ?? ''} {userData?.last_name ?? ''}</Text>
           </View>
           
           <View style={styles.infoRow}>
             <Text style={styles.label}>Student Code:</Text>
-            <Text style={styles.value}>{userData.student_code}</Text>
+            <Text style={styles.value}>{userData?.student_code ?? ''}</Text>
           </View>
           
           <View style={styles.infoRow}>
             <Text style={styles.label}>Gender:</Text>
-            <Text style={styles.value}>{userData.gender}</Text>
+            <Text style={styles.value}>{userData?.gender ?? ''}</Text>
           </View>
           
           <View style={styles.infoRow}>
             <Text style={styles.label}>{Strings.PROFILE.EMAIL_LABEL}</Text>
-            <Text style={styles.value}>{userData.email}</Text>
+            <Text style={styles.value}>{userData?.email ?? ''}</Text>
           </View>
           
           <View style={styles.infoRow}>
             <Text style={styles.label}>{Strings.PROFILE.DOB_LABEL}</Text>
-            <Text style={styles.value}>{userData.dob.toLocaleDateString()}</Text>
+            <Text style={styles.value}>
+              {userData?.date_of_birth ? new Date(userData?.date_of_birth)?.toLocaleDateString() : ''}
+            </Text>
           </View>
           
           <View style={styles.infoRow}>
             <Text style={styles.label}>{Strings.PROFILE.BOARD_LABEL}</Text>
-            <Text style={styles.value}>{userData.board}</Text>
+            <Text style={styles.value}>{userData?.board?.board_name ?? ''}</Text>
           </View>
           
           <View style={styles.infoRow}>
             <Text style={styles.label}>{Strings.PROFILE.CLASS_LABEL}</Text>
-            <Text style={styles.value}>{userData.class}</Text>
+            <Text style={styles.value}>{userData?.class?.class_name ?? ''}</Text>
           </View>
           
           <View style={styles.infoRow}>
             <Text style={styles.label}>{Strings.PROFILE.STATUS_LABEL}</Text>
             <Text style={[styles.value, styles.statusText]}>
-              {userData.isLoggedIn ? Strings.PROFILE.ACTIVE_STATUS : Strings.PROFILE.INACTIVE_STATUS}
+              {userData?.isLoggedIn ? Strings.PROFILE.ACTIVE_STATUS : Strings.PROFILE.INACTIVE_STATUS}
             </Text>
           </View>
         </View>
