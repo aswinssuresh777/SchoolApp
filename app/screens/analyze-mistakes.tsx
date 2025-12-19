@@ -84,8 +84,8 @@ const AnalyzeMistakesScreen = () => {
               <View style={styles.answerRow}>
                 <Text style={styles.answerLabel}>Your Answer:</Text>
                 <Text style={styles.wrongAnswer}>{mistake.userAnswer}</Text>
-              </View>
-              <View style={styles.answerRow}>
+              {/* </View>
+              <View style={styles.answerRow}> */}
                 <Text style={styles.answerLabel}>Correct Answer:</Text>
                 <Text style={styles.correctAnswer}>{mistake.correctAnswer}</Text>
               </View>
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   answerContainer: { gap: 8 },
-  answerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  answerRow: { flexDirection: 'column', justifyContent: 'space-between', },
   answerLabel: { fontSize: 14, color: '#666', fontWeight: '500' },
   wrongAnswer: { fontSize: 14, color: '#EF4444', fontWeight: '600' },
   correctAnswer: { fontSize: 14, color: '#10B981', fontWeight: '600' },

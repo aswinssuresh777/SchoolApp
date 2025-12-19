@@ -25,6 +25,13 @@ export const URLS = {
 
 
     GET_SUBJECTS:(classId:string) =>`${BASE_URL}/api/classes/${classId}`,
-    GENERATE_ASSESSMENT:`${BASE_URL}/api/assessments/generate`
+     GET_UNIT_QUESTIONS:(subjectId:string,topicId:string) =>`${BASE_URL}/api/questions/study?class_subject_id=${subjectId}&topic_id=${topicId}`,
+    GENERATE_ASSESSMENT:`${BASE_URL}/api/assessments/generate`,
+    SUBMIT_ASSESMENT:`${BASE_URL}/api/assessments/submit-answer`,
+    GET_ASSESMENT_RESULT:(assesmentId:string)=> `${BASE_URL}/api/assessments/results/${assesmentId}`,
+    GET_OVERALL_RESULT:`${BASE_URL}/api/assessments/history`,
   // Append class ID when using
+
+
+   GET_DASHBOARD_DATA:`${BASE_URL}/api/dashboard/overview`,
 }

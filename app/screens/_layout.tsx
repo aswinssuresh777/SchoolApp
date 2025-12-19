@@ -9,6 +9,9 @@ export default function ScreensLayout() {
       <Stack.Screen name="unitTopicsScreen" />
       <Stack.Screen name="AssesmentUnitScreen" />
       <Stack.Screen name="AssesmentScreen" />
+      <Stack.Screen name="AssesmentResult" />
+      <Stack.Screen name="AssesmentOverallResults" />\
+       <Stack.Screen name="StudyQuestions" />
       {/* <Stack.Screen name="take-test" /> */}
     </Stack>
   );

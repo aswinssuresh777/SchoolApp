@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, BackHandler, View } from "react-native";
 import { AppProvider } from "../context/UserContext";
+import { AppAlertProvider } from "../components/AppAlert";
 
 export default function RootLayout() {
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +61,8 @@ export default function RootLayout() {
   }
 
   return (
-    <AppProvider>
+    <AppAlertProvider>
+      <AppProvider>
       {/* <Stack screenOptions={{ headerShown: false }}>
         {isLoggedIn ? (
           <Stack.Screen name="(home)" />
@@ -79,6 +81,7 @@ export default function RootLayout() {
         <Stack.Screen name="screens" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
-    </AppProvider>
+      </AppProvider>
+    </AppAlertProvider>
   );
 }
