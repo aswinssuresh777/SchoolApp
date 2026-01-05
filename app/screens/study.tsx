@@ -141,7 +141,7 @@ setIsLoading(true);
       </View>:
 <View>
       {/* Quick Stats */}
-      <View style={styles.statsContainer}>
+      {/* <View style={styles.statsContainer}>
         <View style={styles.statCard}>
           <Text style={styles.statNumber}>{subjectData?.length}</Text>
           <Text style={styles.statLabel}>Subjects</Text>
@@ -154,14 +154,14 @@ setIsLoading(true);
           <Text style={styles.statNumber}>66%</Text>
           <Text style={styles.statLabel}>Progress</Text>
         </View>
-      </View>
+      </View> */}
 
       {/* Subjects */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Subjects</Text>
         <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
+          // horizontal
+          // showsHorizontalScrollIndicator={false}
           style={styles.subjectsContainer}
           contentContainerStyle={{ paddingRight: 16 }} // ✅ fix for last item visibility
         >
@@ -199,7 +199,7 @@ setIsLoading(true);
       </View>
 
       {/* Study Materials */}
-      <View style={styles.section}>
+      {/* <View style={styles.section}>
         <Text style={styles.sectionTitle}>Recent Materials</Text>
         <ScrollView style={styles.materialsList} showsVerticalScrollIndicator={false}>
           {studyMaterials.map((material) => (
@@ -230,7 +230,7 @@ setIsLoading(true);
             </TouchableOpacity>
           ))}
         </ScrollView>
-      </View>
+      </View> */}
       </View>
       }
     </SafeAreaView>
@@ -283,8 +283,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderRadius: 16,
     padding: 16,
-    marginRight: 12,
-    width: 140,
+    margin: 10,
+    // marginRight: 12,
+    // width: 140,
     borderLeftWidth: 4,
     elevation: 1,
     shadowColor: '#000',

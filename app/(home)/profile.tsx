@@ -15,13 +15,14 @@ export default function ProfileScreen(): React.ReactElement {
   console.log('userData', userData);
 
   const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('userToken');
-      clearUserData();
-      router.replace('/(auth)/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
+    router.push("/screens/PaymentScreen");
+    // try {
+    //   await AsyncStorage.removeItem('userToken');
+    //   clearUserData();
+    //   router.replace('/(auth)/login');
+    // } catch (error) {
+    //   console.error('Error logging out:', error);
+    // }
   };
 
   const getInitials = (): string => {

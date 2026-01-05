@@ -987,6 +987,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: Colors.INPUT_BACKGROUND,
     fontSize: 16,
+    color: Colors.TEXT_PRIMARY,
     marginBottom: 4,
     justifyContent: 'center',
     paddingHorizontal: 16,

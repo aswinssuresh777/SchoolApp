@@ -148,10 +148,10 @@ setIsLoading(true);
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Subjects</Text>
         <ScrollView
-          horizontal
+          // horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.subjectsContainer}
-          contentContainerStyle={{ paddingRight: 16 }} // ✅ fix for last item visibility
+          contentContainerStyle={{ paddingRight: 16, justifyContent: 'space-evenly' }} // ✅ fix for last item visibility
         >
           {subjectData?.map((subject) => (
             <TouchableOpacity
@@ -190,7 +190,7 @@ setIsLoading(true);
         
         
         {/* Test Categories */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Test Categories</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer}>
             {testCategories.map((category) => (
@@ -205,10 +205,10 @@ setIsLoading(true);
               </TouchableOpacity>
             ))}
           </ScrollView>
-        </View>
+        </View> */}
 
         {/* Quick Actions */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.actionsContainer}>
             <TouchableOpacity style={[styles.actionButton, styles.primaryButton]}>
@@ -220,10 +220,10 @@ setIsLoading(true);
               <Text style={[styles.actionButtonText, { color: '#3B82F6' }]}>Saved Tests</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </View> */}
 
         {/* Recent Tests */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent Tests</Text>
           <FlatList
             data={recentTests}
@@ -233,7 +233,7 @@ setIsLoading(true);
             showsVerticalScrollIndicator={false}
             style={styles.testsList}
           />
-        </View>
+        </View> */}
       </ScrollView>
     </SafeAreaView>
   );
@@ -268,8 +268,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderRadius: 16,
     padding: 16,
-    marginRight: 12,
-    width: 140,
+    margin: 10,
+    // marginRight: 12,
+    // width: 140,
     borderLeftWidth: 4,
     elevation: 1,
     shadowColor: '#000',

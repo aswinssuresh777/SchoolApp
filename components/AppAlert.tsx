@@ -20,7 +20,7 @@ export function showAppAlert(title: string, message?: string, buttons?: AlertBut
 }
 
 export const AppAlertProvider = ({ children }: { children: ReactNode }) => {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string | undefined>(undefined);
   // Default to two buttons: Cancel (left) and OK (right).

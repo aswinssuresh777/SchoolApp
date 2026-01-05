@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { Stack, useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
+import { StatusBar  } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, BackHandler, View } from "react-native";
 import { AppProvider } from "../context/UserContext";
