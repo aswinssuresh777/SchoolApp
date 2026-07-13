@@ -35,7 +35,7 @@ const HomeScreen = () => {
   }, [])
 
   const getDashboardData = async () => {
-    try {
+  try {
       const response = await apiClient.get(URLS.GET_DASHBOARD_DATA);
       if (!(response as any)?.error) {
         console.log('rsess', response)

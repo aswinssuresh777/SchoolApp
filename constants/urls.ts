@@ -34,4 +34,6 @@ export const URLS = {
 
 
    GET_DASHBOARD_DATA:`${BASE_URL}/api/dashboard/overview`,
+   GET_PAYMENT_DATA:`${BASE_URL}/api/payments/create`,
+   VERIFY_PAYMENT:`${BASE_URL}/api/payments/verify`
 }

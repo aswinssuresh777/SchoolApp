@@ -2,29 +2,32 @@ import { Feather, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View,ActivityIndicator } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../../assets/colors';
 import { Strings } from '../../assets/strings';
 import { useUser } from '../../context/UserContext';
 import RazorpayCheckout from "react-native-razorpay";
+import { apiClient } from '@/services/api';
+import { URLS } from '@/constants/urls';
+import { showAppAlert } from '@/components/AppAlert';
 
 export default function ProfileScreen(): React.ReactElement {
   const router = useRouter();
   const { state, clearUserData } = useUser();
   const { userData } = state;
   // Add this state at the top of your component
-const [isSubscribed, setIsSubscribed] = React.useState(false);
-const [loading, setLoading] = React.useState(false);
+  const [isSubscribed, setIsSubscribed] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
-// Subscription handler function
-const handleSubscription = async () => {
-  // Navigate to your payment screen or trigger payment gateway
-  router.push("/screens/PaymentScreen");
-  
-  // After successful payment, you would call:
-  // setIsSubscribed(true);
-};
+  // Subscription handler function
+  const handleSubscription = async () => {
+    // Navigate to your payment screen or trigger payment gateway
+    router.push("/screens/PaymentScreen");
+
+    // After successful payment, you would call:
+    // setIsSubscribed(true);
+  };
 
   console.log('userData', userData);
 
@@ -47,44 +50,70 @@ const handleSubscription = async () => {
   };
 
   const startPayment = async () => {
+    const paymentRequest = {
+      amount: 50,
+      currency: "INR",
+      productInfo: "Annual Subscription - Student Assessment",
+      customerPhone: "9999999999"
+    }
     setLoading(true);
     console.log(RazorpayCheckout);
 
-    // const res = await fetch("http://YOUR_SERVER_IP:3000/create-order", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ amount: 500 }),
-    // });
 
-    // const order = await res.json();
+    const response = await apiClient.post(URLS.GET_PAYMENT_DATA, paymentRequest); // Call your login API
+    // if (!(response as any)?.error) {
+
+    // }
+
 
     const options = {
-      description: "Subscription Payment for ARIVU AI",
+      description: response?.payment?.paymentParams?.description,
       image: "https://yourlogo.png",
       currency: "INR",
-      key: "rzp_test_S0GlEgvpAtTVC1",
-      amount: "100",
+      key: response?.payment?.paymentParams?.key_id,
+      amount: response?.payment?.paymentParams?.amount,
       name: "ARIVU AI",
-    //   order_id: order.id,
+      order_id: response?.payment?.paymentParams?.order_id,
       prefill: {
-        email: "test@email.com",
+        email: response?.payment?.paymentParams?.prefill?.email,
         contact: "9999999999",
-        name: "Test User",
+        name: response?.payment?.paymentParams?.prefill?.name,
       },
-      theme: { color: "#01354e2c" },
+      theme: { color: response?.payment?.paymentParams.theme },
     };
-
+    console.log('payment resp', response, options)
     RazorpayCheckout.open(options)
-      .then((data: any) => {
+      .then(async (data: any) => {
         setLoading(false);
-        console.log(data);
-        setIsSubscribed(true);
-        alert(`Payment success: ${data.razorpay_payment_id}`);
+        const paymentRequest = {
+          razorpay_order_id: data?.razorpay_order_id,
+          razorpay_payment_id: data?.razorpay_payment_id,
+          razorpay_signature: data?.razorpay_signature
+        }
+        const response = await apiClient.post(URLS.VERIFY_PAYMENT, paymentRequest);
+        if (!(response as any)?.error) {
+          console.log(data);
+          // setIsSubscribed(true);
+          showAppAlert('Your Payment Got Success', 'Successfully subscribed to ARIVU AI', [
+            {
+              text: 'OK',
+              style: 'cancel',
+              onPress: () => router.back(),
+            },
+          ]);
+        }
       })
       .catch((error: any) => {
         setLoading(false);
         console.log(error);
-        alert(`Payment failed: ${error.description}`);
+        showAppAlert('Error', error?.error?.reason, [
+          {
+            text: 'OK',
+            style: 'cancel',
+            onPress: () => router.back(),
+          },
+        ]);
+        // alert(`Payment failed: ${error.description}`);
       });
   };
 
@@ -102,106 +131,106 @@ const handleSubscription = async () => {
 
   const fullName = `${userData?.first_name ?? ''} ${userData?.last_name ?? ''}`.trim();
 
-if(loading){
-  return(
-    <SafeAreaView style={styles.container}>
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={Colors.PRIMARY} />
-        <Text style={styles.loadingText}>Processing Your Payment...</Text>
-      </View>
-    </SafeAreaView>
-  )
-}
-else{
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* New Header Card with Premium Subscription */}
-<View style={styles.headerCard}>
-  {/* User Info Row */}
-  <View style={styles.userSection}>
-    <View style={[
-      styles.avatarContainer,
-      isSubscribed && styles.avatarGlow
-    ]}>
-      <Text style={styles.avatarText}>{getInitials()}</Text>
-      {isSubscribed && (
-        <View style={styles.premiumRing} />
-      )}
-    </View>
-    <View style={styles.userInfo}>
-      <Text style={styles.userName}>
-        {userData?.first_name ?? ''} {userData?.last_name ?? ''}
-      </Text>
-      {isSubscribed && (
-        <View style={styles.premiumLabel}>
-          <Ionicons name="sparkles" size={12} color="#22d3ee" />
-          <Text style={styles.premiumLabelText}>Premium</Text>
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={Colors.PRIMARY} />
+          <Text style={styles.loadingText}>Processing Your Payment...</Text>
         </View>
-      )}
-    </View>
-  </View>
-
-  {/* Subscription CTA - Only show if not subscribed */}
-  {!isSubscribed && (
-    <TouchableOpacity
-      style={styles.subscriptionCard}
-      onPress={startPayment}
-      activeOpacity={0.9}
-    >
-      <View style={styles.subscriptionLeft}>
-        <View style={styles.sparkleIcon}>
-          <Ionicons name="flash" size={20} color="#0f172a" />
-        </View>
-        <View>
-          <Text style={styles.subscriptionTitle}>Go Premium</Text>
-          <Text style={styles.subscriptionTitle}>₹50/year*</Text>
-        </View>
-      </View>
-      <View style={styles.upgradeButton}>
-        <Text style={styles.upgradeButtonText}>Upgrade</Text>
-        <Feather name="chevron-right" size={16} color="#0f172a" />
-      </View>
-    </TouchableOpacity>
-  )}
-</View>
-
-
-
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>{Strings.PROFILE.ACADEMIC_INFO_TITLE}</Text>
-          
-          <View style={styles.detailsCard}>
-            <View style={styles.detailRow}>
-              <View style={styles.detailIconBox}>
-                <Ionicons name="school-outline" size={20} color="#10b981" />
+      </SafeAreaView>
+    )
+  }
+  else {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {/* New Header Card with Premium Subscription */}
+          <View style={styles.headerCard}>
+            {/* User Info Row */}
+            <View style={styles.userSection}>
+              <View style={[
+                styles.avatarContainer,
+                isSubscribed && styles.avatarGlow
+              ]}>
+                <Text style={styles.avatarText}>{getInitials()}</Text>
+                {isSubscribed && (
+                  <View style={styles.premiumRing} />
+                )}
               </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{Strings.PROFILE.BOARD_LABEL}</Text>
-                <Text style={styles.detailValue}>{(userData as any)?.board?.board_name ?? Strings.COMMON.NOT_SPECIFIED}</Text>
+              <View style={styles.userInfo}>
+                <Text style={styles.userName}>
+                  {userData?.first_name ?? ''} {userData?.last_name ?? ''}
+                </Text>
+                {isSubscribed && (
+                  <View style={styles.premiumLabel}>
+                    <Ionicons name="sparkles" size={12} color="#22d3ee" />
+                    <Text style={styles.premiumLabelText}>Premium</Text>
+                  </View>
+                )}
               </View>
             </View>
 
-            <View style={styles.rowDivider} />
+            {/* Subscription CTA - Only show if not subscribed */}
+            {!isSubscribed && (
+              <TouchableOpacity
+                style={styles.subscriptionCard}
+                onPress={startPayment}
+                activeOpacity={0.9}
+              >
+                <View style={styles.subscriptionLeft}>
+                  <View style={styles.sparkleIcon}>
+                    <Ionicons name="flash" size={20} color="#0f172a" />
+                  </View>
+                  <View>
+                    <Text style={styles.subscriptionTitle}>Go Premium</Text>
+                    <Text style={styles.subscriptionTitle}>₹50/year*</Text>
+                  </View>
+                </View>
+                <View style={styles.upgradeButton}>
+                  <Text style={styles.upgradeButtonText}>Upgrade</Text>
+                  <Feather name="chevron-right" size={16} color="#0f172a" />
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
 
-            <View style={styles.detailRow}>
-              <View style={styles.detailIconBox}>
-                <MaterialIcons name="menu-book" size={20} color="#f59e0b" />
+
+
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>{Strings.PROFILE.ACADEMIC_INFO_TITLE}</Text>
+
+            <View style={styles.detailsCard}>
+              <View style={styles.detailRow}>
+                <View style={styles.detailIconBox}>
+                  <Ionicons name="school-outline" size={20} color="#10b981" />
+                </View>
+                <View style={styles.detailContent}>
+                  <Text style={styles.detailLabel}>{Strings.PROFILE.BOARD_LABEL}</Text>
+                  <Text style={styles.detailValue}>{(userData as any)?.board?.board_name ?? Strings.COMMON.NOT_SPECIFIED}</Text>
+                </View>
               </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{Strings.PROFILE.CLASS_LABEL}</Text>
-                <Text style={styles.detailValue}>{(userData as any)?.class?.class_name ?? Strings.COMMON.NOT_SPECIFIED}</Text>
+
+              <View style={styles.rowDivider} />
+
+              <View style={styles.detailRow}>
+                <View style={styles.detailIconBox}>
+                  <MaterialIcons name="menu-book" size={20} color="#f59e0b" />
+                </View>
+                <View style={styles.detailContent}>
+                  <Text style={styles.detailLabel}>{Strings.PROFILE.CLASS_LABEL}</Text>
+                  <Text style={styles.detailValue}>{(userData as any)?.class?.class_name ?? Strings.COMMON.NOT_SPECIFIED}</Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
 
-        {/* Personal Details Section */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>{Strings.PROFILE.PERSONAL_DETAILS_TITLE}</Text>
-          
-          <View style={styles.detailsCard}>
-            {/* <View style={styles.detailRow}>
+          {/* Personal Details Section */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>{Strings.PROFILE.PERSONAL_DETAILS_TITLE}</Text>
+
+            <View style={styles.detailsCard}>
+              {/* <View style={styles.detailRow}>
               <View style={styles.detailIconBox}>
                 <Ionicons name="person-outline" size={20} color="#6366f1" />
               </View>
@@ -213,61 +242,61 @@ else{
 
             <View style={styles.rowDivider} /> */}
 
-            <View style={styles.detailRow}>
-              <View style={styles.detailIconBox}>
-                <Ionicons name="person-outline" size={20} color="#ec4899" />
+              <View style={styles.detailRow}>
+                <View style={styles.detailIconBox}>
+                  <Ionicons name="person-outline" size={20} color="#ec4899" />
+                </View>
+                <View style={styles.detailContent}>
+                  <Text style={styles.detailLabel}>{Strings.PROFILE.GENDER_LABEL}</Text>
+                  <Text style={styles.detailValue}>{(userData as any)?.gender ?? Strings.COMMON.NOT_SPECIFIED}</Text>
+                </View>
               </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{Strings.PROFILE.GENDER_LABEL}</Text>
-                <Text style={styles.detailValue}>{(userData as any)?.gender ?? Strings.COMMON.NOT_SPECIFIED}</Text>
-              </View>
-            </View>
 
-            <View style={styles.rowDivider} />
+              <View style={styles.rowDivider} />
 
-            <View style={styles.detailRow}>
-              <View style={styles.detailIconBox}>
-                <MaterialIcons name="date-range" size={20} color="#f97316" />
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{Strings.PROFILE.DOB_LABEL}</Text>
-                <Text style={styles.detailValue}>
-                  {(userData as any)?.date_of_birth
-                    ? new Date((userData as any).date_of_birth).toLocaleDateString('en-US', {
+              <View style={styles.detailRow}>
+                <View style={styles.detailIconBox}>
+                  <MaterialIcons name="date-range" size={20} color="#f97316" />
+                </View>
+                <View style={styles.detailContent}>
+                  <Text style={styles.detailLabel}>{Strings.PROFILE.DOB_LABEL}</Text>
+                  <Text style={styles.detailValue}>
+                    {(userData as any)?.date_of_birth
+                      ? new Date((userData as any).date_of_birth).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric',
                       })
-                    : Strings.COMMON.NOT_SPECIFIED}
-                </Text>
+                      : Strings.COMMON.NOT_SPECIFIED}
+                  </Text>
+                </View>
               </View>
-            </View>
 
-            <View style={styles.rowDivider} />
+              <View style={styles.rowDivider} />
 
-            <View style={styles.detailRow}>
-              <View style={styles.detailIconBox}>
-                <Feather name="mail" size={20} color="#06b6d4" />
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{Strings.PROFILE.EMAIL_LABEL}</Text>
-                <Text style={styles.detailValue}>{userData?.email ?? Strings.COMMON.NOT_SPECIFIED}</Text>
+              <View style={styles.detailRow}>
+                <View style={styles.detailIconBox}>
+                  <Feather name="mail" size={20} color="#06b6d4" />
+                </View>
+                <View style={styles.detailContent}>
+                  <Text style={styles.detailLabel}>{Strings.PROFILE.EMAIL_LABEL}</Text>
+                  <Text style={styles.detailValue}>{userData?.email ?? Strings.COMMON.NOT_SPECIFIED}</Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
 
-        {/* Logout Button */}
-        <View style={styles.logoutContainer}>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
-            <Feather name="log-out" size={18} color="#dc2626" />
-            <Text style={styles.logoutButtonText}> {Strings.PROFILE.LOGOUT_BUTTON}</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
+          {/* Logout Button */}
+          <View style={styles.logoutContainer}>
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
+              <Feather name="log-out" size={18} color="#dc2626" />
+              <Text style={styles.logoutButtonText}> {Strings.PROFILE.LOGOUT_BUTTON}</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 }
 const styles = StyleSheet.create({
   loadingText: {
@@ -289,7 +318,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
   },
-    // Header Card
+  // Header Card
   // Section
   sectionContainer: {
     paddingHorizontal: 16,
@@ -374,122 +403,122 @@ const styles = StyleSheet.create({
     color: '#475569',
     textAlign: 'center',
   },
- // Header Card - Dark Slate
-headerCard: {
-  backgroundColor: '#1e293b',
-  marginHorizontal: 16,
-  marginTop: 16,
-  borderRadius: 24,
-  padding: 20,
-},
+  // Header Card - Dark Slate
+  headerCard: {
+    backgroundColor: '#1e293b',
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 24,
+    padding: 20,
+  },
 
-// User Section
-userSection: {
-  flexDirection: 'row',
-  alignItems: 'center',
-},
-userInfo: {
-  flex: 1,
-  marginLeft: 16,
-},
-userName: {
-  fontSize: 22,
-  fontWeight: '700',
-  color: '#f8fafc',
-},
+  // User Section
+  userSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  userInfo: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  userName: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#f8fafc',
+  },
 
-// Avatar
-avatarContainer: {
-  backgroundColor: '#334155',
-  borderRadius: 50,
-  width: 72,
-  height: 72,
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderWidth: 3,
-  borderColor: '#475569',
-},
-avatarText: {
-  fontSize: 28,
-  fontWeight: 'bold',
-  color: '#f1f5f9',
-},
+  // Avatar
+  avatarContainer: {
+    backgroundColor: '#334155',
+    borderRadius: 50,
+    width: 72,
+    height: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#475569',
+  },
+  avatarText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#f1f5f9',
+  },
 
-// Premium Glow Effect
-avatarGlow: {
-  borderColor: '#22d3ee',
-  shadowColor: '#22d3ee',
-  shadowOffset: { width: 0, height: 0 },
-  shadowOpacity: 0.8,
-  shadowRadius: 12,
-  elevation: 8,
-},
-premiumRing: {
-  position: 'absolute',
-  width: 82,
-  height: 82,
-  borderRadius: 50,
-  borderWidth: 2,
-  borderColor: 'rgba(34, 211, 238, 0.4)',
-},
-premiumLabel: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginTop: 4,
-},
-premiumLabelText: {
-  color: '#22d3ee',
-  fontSize: 13,
-  fontWeight: '600',
-  marginLeft: 4,
-},
+  // Premium Glow Effect
+  avatarGlow: {
+    borderColor: '#22d3ee',
+    shadowColor: '#22d3ee',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  premiumRing: {
+    position: 'absolute',
+    width: 82,
+    height: 82,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: 'rgba(34, 211, 238, 0.4)',
+  },
+  premiumLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  premiumLabelText: {
+    color: '#22d3ee',
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
 
-// Subscription Card - Cyan Gradient Look
-subscriptionCard: {
-  backgroundColor: '#22d3ee',
-  borderRadius: 16,
-  padding: 16,
-  marginTop: 20,
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-},
-subscriptionLeft: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  flex: 1,
-},
-sparkleIcon: {
-  backgroundColor: '#a5f3fc',
-  borderRadius: 12,
-  padding: 10,
-  marginRight: 12,
-},
-subscriptionTitle: {
-  fontSize: 17,
-  fontWeight: '700',
-  color: '#0f172a',
-},
-subscriptionPrice: {
-  fontSize: 12,
-  color: '#164e63',
-  fontWeight: '500',
-  marginTop: 2,
-},
-upgradeButton: {
-  backgroundColor: '#a5f3fc',
-  flexDirection: 'row',
-  alignItems: 'center',
-  paddingHorizontal: 14,
-  paddingVertical: 10,
-  borderRadius: 12,
-},
-upgradeButtonText: {
-  color: '#0f172a',
-  fontSize: 14,
-  fontWeight: '700',
-  marginRight: 4,
-},
+  // Subscription Card - Cyan Gradient Look
+  subscriptionCard: {
+    backgroundColor: '#22d3ee',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  subscriptionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  sparkleIcon: {
+    backgroundColor: '#a5f3fc',
+    borderRadius: 12,
+    padding: 10,
+    marginRight: 12,
+  },
+  subscriptionTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  subscriptionPrice: {
+    fontSize: 12,
+    color: '#164e63',
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  upgradeButton: {
+    backgroundColor: '#a5f3fc',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  upgradeButtonText: {
+    color: '#0f172a',
+    fontSize: 14,
+    fontWeight: '700',
+    marginRight: 4,
+  },
 
 
 
