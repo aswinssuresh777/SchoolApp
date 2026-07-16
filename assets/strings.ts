@@ -33,7 +33,17 @@ export const Strings = {
 
   // Home Screen
   HOME: {
-    WELCOME_TITLE: 'Welcome to Home Screen',
+    HEADER_TITLE: 'Dashboard',
+    HEADER_SUBTITLE: 'Welcome, {name}',
+    TOTAL_TESTS_LABEL: 'Total Tests',
+    AVG_SCORE_LABEL: 'Avg Score',
+    OVERALL_ASSESSMENT_TITLE: 'Overall Assessment Result',
+    OVERALL_ASSESSMENT_SUBTITLE: 'Review and learn from incorrect answers',
+    STUDY_BUTTON: 'Study',
+    TAKE_TEST_BUTTON: 'Take Test',
+    BEST_SCORE_LABEL: 'Best Score',
+    ACTIVE_ASSESSMENTS_LABEL: 'Active Assessments',
+    COMPLETED_LABEL: 'Completed',
   },
 
   // Profile Screen
@@ -42,7 +52,10 @@ export const Strings = {
     NO_USER_DATA_TITLE: 'No User Data',
     NO_USER_DATA_SUBTITLE: 'Please register to view your profile',
     PERSONAL_INFO_TITLE: 'Personal Information',
+    ACADEMIC_INFO_TITLE: 'Academic Info',
+    PERSONAL_DETAILS_TITLE: 'Personal Details',
     NAME_LABEL: 'Name:',
+    GENDER_LABEL: 'Gender',
     EMAIL_LABEL: 'Email:',
     DOB_LABEL: 'Date of Birth:',
     BOARD_LABEL: 'Board:',
@@ -86,6 +99,7 @@ export const Strings = {
   // Common
   COMMON: {
     LOADING: 'Loading...',
+    NOT_SPECIFIED: 'Not specified',
     ERROR: 'Error',
     SUCCESS: 'Success',
     CANCEL: 'Cancel',

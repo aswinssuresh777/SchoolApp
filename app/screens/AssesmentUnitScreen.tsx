@@ -94,7 +94,8 @@ export default function AssesmentUnitScreen() {
     console.log('Selected Topics:', selected);
     router.push({
       pathname: "/screens/AssesmentScreen",
-      params: { selectedTopics: selected,questionCount:questionCount },
+      params: { selectedTopics:  JSON.stringify(selected),questionCount:questionCount,subjectId:subjectId },
+    
     });
     // TODO: Add your navigation or logic here
   };
@@ -153,7 +154,7 @@ if(isLoading){
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Select Units</Text>
       </View>
-
+      <View style={{flex:1}}>
       <FlatList
         data={allUnitsData}
         keyExtractor={(item) => item.topic_id}
@@ -164,13 +165,14 @@ if(isLoading){
 <View
   style={[
     styles.questionCountContainer,
-    selectedTopics.length > 0 && { paddingBottom: 60 }
+    selectedTopics.length > 0 && { paddingBottom: 20 }
   ]}
 >
   <QuestionCountComponent
     value={questionCount}
     setValue={setQuestionCount}
   />
+</View>
 </View>
 {selectedTopics.length > 0 && (
         <TouchableOpacity
@@ -258,15 +260,12 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   startButton: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
     backgroundColor: '#2563eb',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    margin:16
   },
   startButtonText: {
     color: '#fff',

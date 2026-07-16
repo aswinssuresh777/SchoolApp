@@ -646,192 +646,196 @@
 import { URLS } from "@/constants/urls";
 import { useUser } from "@/context/UserContext";
 import { apiClient } from "@/services/api";
-import { useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  Animated,
+  BackHandler,
+  Easing,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  StatusBar,
-  ScrollView,
-  Alert,
-  BackHandler,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 
 // =======================================================================================
 // MOCK DATA
 // =======================================================================================
 const mockData = {
-  "error": false,
-  "message": "Assessment generated successfully",
-  "assessment": {
-      "session_id": "2f99f5f5-ef80-4138-ad09-b66596aa23ed",
-      "session_name": "Tamil Assessment - 11/20/2025",
-      "total_questions": 5,
-      "total_marks": 5,
-      "time_limit_minutes": 5,
-      "started_at": "2025-11-20T05:11:32.509Z",
-      "end_time": "2025-11-20T05:16:32.509Z"
+  error: false,
+  message: "Assessment generated successfully",
+  assessment: {
+    session_id: "2f99f5f5-ef80-4138-ad09-b66596aa23ed",
+    session_name: "Tamil Assessment - 11/20/2025",
+    total_questions: 5,
+    total_marks: 5,
+    time_limit_minutes: 5,
+    started_at: "2025-11-20T05:11:32.509Z",
+    end_time: "2025-11-20T05:16:32.509Z",
   },
-  "questions": [
-      {
-          "question_id": "d3d008ba-d95b-43ab-a5d8-cd99e98d8f7b",
-          "question_text": "வேர்ச்சொல்லை, மனச்சொல்லை, மாறிமாறாடை ஆகியவற்றைக் குறிப்பிடும் பயிறிவழை—",
-          "question_type": "MCQ",
-          "difficulty_level": "Easy",
-          "marks": 1,
-          "topic_name": "அறிவியல், தொழில்நுட்பம்",
-          "options": [
-              {
-                  "option_id": "d5e8271c-c301-4b6e-9b11-709d16afbb74",
-                  "option_text": "குலை வாக்கு",
-                  "option_letter": "A"
-              },
-              {
-                  "option_id": "fd6024d4-38cd-4f49-a9ba-82957f9c7828",
-                  "option_text": "மனை வாக்கு",
-                  "option_letter": "B"
-              },
-              {
-                  "option_id": "8b3c1a6a-5a47-4d95-8098-3d22ce01afec",
-                  "option_text": "கொடுத்த வாக்கு",
-                  "option_letter": "C"
-              },
-              {
-                  "option_id": "0a50bbfb-470c-4f18-9dd3-e948c0ad6e18",
-                  "option_text": "விலை வாக்கு",
-                  "option_letter": "D"
-              }
-          ]
-      },
-      {
-          "question_id": "bd8e2c48-65c8-4dd0-92f5-b8ec9da4469b",
-          "question_text": "‘கேட்டவர் மகிழப் பாடிய பாடல் இது’ — தொடரில் இடம்பெற்றுள்ள தொழிற்பெயரும் விளைவாய்பெயரும் பெறும் முதலியே—",
-          "question_type": "MCQ",
-          "difficulty_level": "Easy",
-          "marks": 1,
-          "topic_name": "அறிவியல், தொழில்நுட்பம்",
-          "options": [
-              {
-                  "option_id": "90d83c6c-d04c-4fd1-9ac6-202db58737f2",
-                  "option_text": "பாடப்; கேட்டவர்",
-                  "option_letter": "A"
-              },
-              {
-                  "option_id": "297fb626-2c7b-48f8-8e8e-1d9e48d5a066",
-                  "option_text": "பாடல்; பாடிய",
-                  "option_letter": "B"
-              },
-              {
-                  "option_id": "8df35cb9-b63e-4de4-a286-2fcfd615513b",
-                  "option_text": "கேட்டவர்; பாடப்",
-                  "option_letter": "C"
-              },
-              {
-                  "option_id": "ae02f56d-825e-44b4-b445-7d35ede3b64d",
-                  "option_text": "பாடல்; கேட்டவர்",
-                  "option_letter": "D"
-              }
-          ]
-      },
-      {
-          "question_id": "e3c289ab-6d23-480b-960c-a88b4be5f2c2",
-          "question_text": "‘காப்பாய் இலையையும் காப்பாய் தோளையும்’ அடிக்கோட்டுப் பகுதி குறிப்பு பெறுவது—",
-          "question_type": "MCQ",
-          "difficulty_level": "Easy",
-          "marks": 1,
-          "topic_name": "அறிவியல், தொழில்நுட்பம்",
-          "options": [
-              {
-                  "option_id": "c89e6a75-3127-4957-afbb-59639393faef",
-                  "option_text": "இலைவும் சருகும்",
-                  "option_letter": "A"
-              },
-              {
-                  "option_id": "67224255-8f8b-4b78-a0bc-278c102ef889",
-                  "option_text": "தோளையம் சண்டும்",
-                  "option_letter": "B"
-              },
-              {
-                  "option_id": "0c370c24-b3d8-4a87-b25e-dca184f1d17a",
-                  "option_text": "தாழும் ஒளையும்",
-                  "option_letter": "C"
-              },
-              {
-                  "option_id": "18f6a4f7-86d9-4ec8-a283-6672d284aece",
-                  "option_text": "சருகும் சண்டும்",
-                  "option_letter": "D"
-              }
-          ]
-      },
-      {
-          "question_id": "9fa281cf-3db5-4da3-a849-1fb8d8a35e68",
-          "question_text": "எந்தநூனா என்பதைப் பிரித்தால் இவ்வாறு வரும்—",
-          "question_type": "MCQ",
-          "difficulty_level": "Easy",
-          "marks": 1,
-          "topic_name": "அறிவியல், தொழில்நுட்பம்",
-          "options": [
-              {
-                  "option_id": "d71048d3-8dc3-4ae0-9eee-0d19f885e1fb",
-                  "option_text": "எ + தமிழ் + நா",
-                  "option_letter": "A"
-              },
-              {
-                  "option_id": "cf5cd754-d84d-4d52-a0b6-a9bcab4815cd",
-                  "option_text": "எந்த + தமிழ் + நா",
-                  "option_letter": "B"
-              },
-              {
-                  "option_id": "51bef075-e396-4f0b-bd7b-533da2dc6d04",
-                  "option_text": "எம் + தமிழ் + நா",
-                  "option_letter": "C"
-              },
-              {
-                  "option_id": "e6f0b3c0-f0e4-4a2f-93b6-1a239a09d610",
-                  "option_text": "எந்தம் + தமிழ் + நா",
-                  "option_letter": "D"
-              }
-          ]
-      },
-      {
-          "question_id": "7b5d6b7e-1c48-4c7a-ae84-b7dca8dcf901",
-          "question_text": "‘மெத்த வணிகலை’ என்னும் தொழிலில் தமிழ்மொழியாளர் குறைப்பது எது?",
-          "question_type": "MCQ",
-          "difficulty_level": "Easy",
-          "marks": 1,
-          "topic_name": "அறிவியல், தொழில்நுட்பம்",
-          "options": [
-              {
-                  "option_id": "d6671b0f-630d-4b82-8525-9ad7e05fb499",
-                  "option_text": "வணிகக் கம்பெனிகளும் ஷாப்பிங்களும் காப்பியங்களும்",
-                  "option_letter": "A"
-              },
-              {
-                  "option_id": "913da1cf-77a2-4cc0-a2ec-198aa45d0490",
-                  "option_text": "பெரும் வணிகமும் பெரும் கலைகளும்",
-                  "option_letter": "B"
-              },
-              {
-                  "option_id": "3adb3f17-fb05-4cf0-9f7d-815e3cb43385",
-                  "option_text": "ஷாப்பிங்கு காப்பியங்களும் அலங்கணங்களும்",
-                  "option_letter": "C"
-              },
-              {
-                  "option_id": "fb61feb0-cf47-4dcb-afe1-73f2cb52df92",
-                  "option_text": "வணிகக் கம்பெனிகள் அலங்கணங்களும்",
-                  "option_letter": "D"
-              }
-          ]
-      }
-  ]
+  questions: [
+    {
+      question_id: "d3d008ba-d95b-43ab-a5d8-cd99e98d8f7b",
+      question_text:
+        "வேர்ச்சொல்லை, மனச்சொல்லை, மாறிமாறாடை ஆகியவற்றைக் குறிப்பிடும் பயிறிவழை—",
+      question_type: "MCQ",
+      difficulty_level: "Easy",
+      marks: 1,
+      topic_name: "அறிவியல், தொழில்நுட்பம்",
+      options: [
+        {
+          option_id: "d5e8271c-c301-4b6e-9b11-709d16afbb74",
+          option_text: "குலை வாக்கு",
+          option_letter: "A",
+        },
+        {
+          option_id: "fd6024d4-38cd-4f49-a9ba-82957f9c7828",
+          option_text: "மனை வாக்கு",
+          option_letter: "B",
+        },
+        {
+          option_id: "8b3c1a6a-5a47-4d95-8098-3d22ce01afec",
+          option_text: "கொடுத்த வாக்கு",
+          option_letter: "C",
+        },
+        {
+          option_id: "0a50bbfb-470c-4f18-9dd3-e948c0ad6e18",
+          option_text: "விலை வாக்கு",
+          option_letter: "D",
+        },
+      ],
+    },
+    {
+      question_id: "bd8e2c48-65c8-4dd0-92f5-b8ec9da4469b",
+      question_text:
+        "‘கேட்டவர் மகிழப் பாடிய பாடல் இது’ — தொடரில் இடம்பெற்றுள்ள தொழிற்பெயரும் விளைவாய்பெயரும் பெறும் முதலியே—",
+      question_type: "MCQ",
+      difficulty_level: "Easy",
+      marks: 1,
+      topic_name: "அறிவியல், தொழில்நுட்பம்",
+      options: [
+        {
+          option_id: "90d83c6c-d04c-4fd1-9ac6-202db58737f2",
+          option_text: "பாடப்; கேட்டவர்",
+          option_letter: "A",
+        },
+        {
+          option_id: "297fb626-2c7b-48f8-8e8e-1d9e48d5a066",
+          option_text: "பாடல்; பாடிய",
+          option_letter: "B",
+        },
+        {
+          option_id: "8df35cb9-b63e-4de4-a286-2fcfd615513b",
+          option_text: "கேட்டவர்; பாடப்",
+          option_letter: "C",
+        },
+        {
+          option_id: "ae02f56d-825e-44b4-b445-7d35ede3b64d",
+          option_text: "பாடல்; கேட்டவர்",
+          option_letter: "D",
+        },
+      ],
+    },
+    {
+      question_id: "e3c289ab-6d23-480b-960c-a88b4be5f2c2",
+      question_text:
+        "‘காப்பாய் இலையையும் காப்பாய் தோளையும்’ அடிக்கோட்டுப் பகுதி குறிப்பு பெறுவது—",
+      question_type: "MCQ",
+      difficulty_level: "Easy",
+      marks: 1,
+      topic_name: "அறிவியல், தொழில்நுட்பம்",
+      options: [
+        {
+          option_id: "c89e6a75-3127-4957-afbb-59639393faef",
+          option_text: "இலைவும் சருகும்",
+          option_letter: "A",
+        },
+        {
+          option_id: "67224255-8f8b-4b78-a0bc-278c102ef889",
+          option_text: "தோளையம் சண்டும்",
+          option_letter: "B",
+        },
+        {
+          option_id: "0c370c24-b3d8-4a87-b25e-dca184f1d17a",
+          option_text: "தாழும் ஒளையும்",
+          option_letter: "C",
+        },
+        {
+          option_id: "18f6a4f7-86d9-4ec8-a283-6672d284aece",
+          option_text: "சருகும் சண்டும்",
+          option_letter: "D",
+        },
+      ],
+    },
+    {
+      question_id: "9fa281cf-3db5-4da3-a849-1fb8d8a35e68",
+      question_text: "எந்தநூனா என்பதைப் பிரித்தால் இவ்வாறு வரும்—",
+      question_type: "MCQ",
+      difficulty_level: "Easy",
+      marks: 1,
+      topic_name: "அறிவியல், தொழில்நுட்பம்",
+      options: [
+        {
+          option_id: "d71048d3-8dc3-4ae0-9eee-0d19f885e1fb",
+          option_text: "எ + தமிழ் + நா",
+          option_letter: "A",
+        },
+        {
+          option_id: "cf5cd754-d84d-4d52-a0b6-a9bcab4815cd",
+          option_text: "எந்த + தமிழ் + நா",
+          option_letter: "B",
+        },
+        {
+          option_id: "51bef075-e396-4f0b-bd7b-533da2dc6d04",
+          option_text: "எம் + தமிழ் + நா",
+          option_letter: "C",
+        },
+        {
+          option_id: "e6f0b3c0-f0e4-4a2f-93b6-1a239a09d610",
+          option_text: "எந்தம் + தமிழ் + நா",
+          option_letter: "D",
+        },
+      ],
+    },
+    {
+      question_id: "7b5d6b7e-1c48-4c7a-ae84-b7dca8dcf901",
+      question_text:
+        "‘மெத்த வணிகலை’ என்னும் தொழிலில் தமிழ்மொழியாளர் குறைப்பது எது?",
+      question_type: "MCQ",
+      difficulty_level: "Easy",
+      marks: 1,
+      topic_name: "அறிவியல், தொழில்நுட்பம்",
+      options: [
+        {
+          option_id: "d6671b0f-630d-4b82-8525-9ad7e05fb499",
+          option_text: "வணிகக் கம்பெனிகளும் ஷாப்பிங்களும் காப்பியங்களும்",
+          option_letter: "A",
+        },
+        {
+          option_id: "913da1cf-77a2-4cc0-a2ec-198aa45d0490",
+          option_text: "பெரும் வணிகமும் பெரும் கலைகளும்",
+          option_letter: "B",
+        },
+        {
+          option_id: "3adb3f17-fb05-4cf0-9f7d-815e3cb43385",
+          option_text: "ஷாப்பிங்கு காப்பியங்களும் அலங்கணங்களும்",
+          option_letter: "C",
+        },
+        {
+          option_id: "fb61feb0-cf47-4dcb-afe1-73f2cb52df92",
+          option_text: "வணிகக் கம்பெனிகள் அலங்கணங்களும்",
+          option_letter: "D",
+        },
+      ],
+    },
+  ],
 };
 // (I removed the long mock to shorten; keep your own full mock)
-
 
 // =======================================================================================
 // QUESTION COMPONENT
@@ -873,8 +877,6 @@ const QuestionComponent = ({ question, selectedOption, onSelectOption }) => {
   );
 };
 
-
-
 // =======================================================================================
 // MOCK API FORMAT EXACTLY LIKE BACKEND
 // =======================================================================================
@@ -891,13 +893,11 @@ const fetchAssessmentData = async () => {
   });
 };
 
-
-
 // =======================================================================================
 // MAIN SCREEN
 // =======================================================================================
 export default function AssessmentScreen() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [assessmentInfo, setAssessmentInfo] = useState(null);
 
@@ -907,67 +907,140 @@ export default function AssessmentScreen() {
 
   const [timer, setTimer] = useState(0);
   const [completed, setCompleted] = useState(false);
-
+  const [assessmentResponse, setAssessmentResponse] = useState({
+    assessment: {
+      percentage: 20,
+      score: 1,
+      session_id: "cfb0372a-f2ad-459c-9539-7f8e6620661b",
+      status: "Completed",
+      total_marks: 5,
+    },
+    error: false,
+    message: "Answers submitted successfully and assessment completed",
+    results: [
+      {
+        is_correct: false,
+        marks_obtained: 0,
+        question_id: "7b5d6b7e-1c48-4c7a-ae84-b7dca8dcf901",
+      },
+      {
+        is_correct: true,
+        marks_obtained: 1,
+        question_id: "9fa281cf-3db5-4da3-a849-1fb8d8a35e68",
+      },
+      {
+        is_correct: false,
+        marks_obtained: 0,
+        question_id: "d3d008ba-d95b-43ab-a5d8-cd99e98d8f7b",
+      },
+      {
+        is_correct: false,
+        marks_obtained: 0,
+        question_id: "e3c289ab-6d23-480b-960c-a88b4be5f2c2",
+      },
+      {
+        is_correct: false,
+        marks_obtained: 0,
+        question_id: "bd8e2c48-65c8-4dd0-92f5-b8ec9da4469b",
+      },
+    ],
+  });
   const { state } = useUser();
   const { userData } = state;
-  const { selectedTopics = [], questionCount = 5 } = useLocalSearchParams() ?? {};
+  const {
+    selectedTopics,
+    questionCount = 5,
+    subjectId,
+  } = useLocalSearchParams() ?? {};
+  const parsedSelectedTopics: string[] = selectedTopics
+  ? JSON.parse(selectedTopics as string)
+  : [];
+  const [questionStartTime, setQuestionStartTime] = useState(Date.now());
+  const [timeSpent, setTimeSpent] = useState({});
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(20)).current;
 
-
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 900, // slower fade
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 900, // smooth slide up
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   // =======================================================================================
   // BLOCK HARDWARE BACK
   // =======================================================================================
   useEffect(() => {
-    const backAction = () => {
-      Alert.alert(
-        "Assessment in Progress",
-        "There is an active assessment. You cannot go back now.",
-        [{ text: "OK", style: "cancel" }]
+    if (!loading && !completed && questions?.length > 0) {
+      const backAction = () => {
+        Alert.alert(
+          "Assessment in Progress",
+          "There is an active assessment. You cannot go back now.",
+          [{ text: "OK", style: "cancel" }]
+        );
+        return true;
+      };
+
+      const handler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        backAction
       );
-      return true;
-    };
 
-    const handler = BackHandler.addEventListener(
-      "hardwareBackPress",
-      backAction
-    );
-
-    return () => handler.remove();
-  }, []);
-
-
+      return () => handler.remove();
+    }
+  }, [loading, questions?.length > 0, completed]);
 
   // =======================================================================================
   // LOAD DATA
   // =======================================================================================
   const loadAssessment = async () => {
     setLoading(true);
-
+    const payload = {
+      class_subject_id: subjectId,
+      question_count: questionCount,
+      units: parsedSelectedTopics,
+    };
+    console.log("payloa d", payload);
     try {
-      const response = await fetchAssessmentData();
-
-      if (response.error) {
+      const response = await apiClient.post(URLS.GENERATE_ASSESSMENT, payload);
+      if (!(response as any).error) {
+        setTimer(response?.assessment?.time_limit_minutes * 60);
+        setAssessmentInfo(response.assessment);
+        setQuestions(response.questions);
         setLoading(false);
-        return;
       }
 
-      setAssessmentInfo(response.assessment);
-      setQuestions(response.questions);
-
-      // timer in seconds
-      setTimer(response.assessment.time_limit_minutes * 60);
-    } catch (err) {
-      console.log("Assessment error:", err);
+      console.log(response);
+    } catch (error) {
+      // Alert.alert(
+      //   "Cannot Generate Assessment",
+      //   "There is an active assessment. Complete it to create new one.",
+      //   [
+      //     {
+      //       text: "OK",
+      //       style: "cancel",
+      //       onPress: () => router.back()   // ➤ Go back when OK is pressed
+      //     }
+      //   ]
+      // );
+      console.log("Error calling API:", error);
     }
-
     setLoading(false);
   };
 
   useEffect(() => {
     loadAssessment();
   }, []);
-
-
 
   // =======================================================================================
   // TIMER + AUTO SUBMIT
@@ -981,7 +1054,10 @@ export default function AssessmentScreen() {
     }
 
     if (timer === 0 && !completed) {
-      Alert.alert("Time's Up!", "Your assessment has been submitted automatically.");
+      Alert.alert(
+        "Time's Up!",
+        "Your assessment has been submitted automatically."
+      );
       handleSubmit();
     }
   }, [timer, questions, completed]);
@@ -991,8 +1067,6 @@ export default function AssessmentScreen() {
     const s = sec % 60;
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
-
-
 
   // =======================================================================================
   // SELECT OPTION
@@ -1006,7 +1080,7 @@ export default function AssessmentScreen() {
     }));
 
     setUnanswered((prev) => prev.filter((x) => x !== currentIndex));
-
+    recordTimeForCurrentQuestion();
     setTimeout(() => {
       if (currentIndex < questions.length - 1) {
         setCurrentIndex(currentIndex + 1);
@@ -1014,12 +1088,24 @@ export default function AssessmentScreen() {
     }, 250);
   };
 
+  const recordTimeForCurrentQuestion = () => {
+    const q = questions[currentIndex];
+    const now = Date.now();
+    const secondsSpent = Math.floor((now - questionStartTime) / 1000);
 
+    setTimeSpent((prev) => ({
+      ...prev,
+      [q?.question_id]: (prev[q?.question_id] || 0) + secondsSpent,
+    }));
+
+    setQuestionStartTime(Date.now());
+  };
 
   // =======================================================================================
   // NAVIGATION
   // =======================================================================================
   const goNext = () => {
+    recordTimeForCurrentQuestion();
     const q = questions[currentIndex];
 
     if (!answers[q.question_id]) {
@@ -1034,25 +1120,43 @@ export default function AssessmentScreen() {
   };
 
   const goPrev = () => {
+    recordTimeForCurrentQuestion();
     if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
   };
-
-
 
   // =======================================================================================
   // SUBMIT
   // =======================================================================================
-  const handleSubmit = () => {
-    if(unanswered.length>0)
-    {
-      Alert.alert("You have unanswered questions please complete it to Submit Assesment");
-      return ;
+  const handleSubmit = async () => {
+    if (unanswered.length > 0) {
+      Alert.alert(
+        "You have unanswered questions please complete it to Submit Assesment"
+      );
+      return;
     }
-    setCompleted(true);
+    recordTimeForCurrentQuestion();
+    const payload = {
+      answers: questions.map((q) => ({
+        question_id: q?.question_id,
+        selected_option_id: answers[q?.question_id],
+        time_taken_seconds: timeSpent[q?.question_id] || 0,
+      })),
+    };
+    try {
+      const response = await apiClient.post(URLS.SUBMIT_ASSESMENT, payload);
+      if (!(response as any).error) {
+        setAssessmentResponse(response);
+        setCompleted(true);
+      }
+      setLoading(false);
+      console.log(response);
+    } catch (error) {
+      console.log("Error calling API:", error);
+    }
+    console.log("FINAL PAYLOAD:", payload);
+
     console.log("FINAL ANSWERS:", answers);
   };
-
-
 
   // =======================================================================================
   // LOADING
@@ -1065,7 +1169,53 @@ export default function AssessmentScreen() {
     );
   }
 
+  if (completed) {
+    const percentage = assessmentResponse?.assessment?.percentage || 0;
 
+    // Dynamic color based on score
+    const scoreColor =
+      percentage >= 80 ? "#2ecc71" : percentage >= 50 ? "#f1c40f" : "#e74c3c";
+
+    return (
+      <View style={styles.centered}>
+        <Animated.View
+          style={[
+            styles.card,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY }],
+            },
+          ]}
+        >
+          <Text style={styles.completeTitle}>🎉 Assessment Completed</Text>
+          <Text style={styles.completeSubtitle}>
+            You scored{"  "}
+            <Text style={{ color: scoreColor, fontWeight: "700" }}>
+              {assessmentResponse?.assessment?.score}
+            </Text>{" "}
+            out of {assessmentResponse?.assessment?.total_marks}
+          </Text>
+
+          <Text style={[styles.percentageTitle, { color: scoreColor }]}>
+            Your Assessment Percentage: {percentage}%
+          </Text>
+
+          <TouchableOpacity
+            style={styles.restartBtn}
+            onPress={() => {
+              // navigation logic for "Go To Results"
+              router.push({
+                pathname: "/screens/AssesmentResult",
+                params: { assessmentSessionId: assessmentResponse?.assessment?.session_id },
+              });
+            }}
+          >
+            <Text style={styles.restartText}>View Detailed Results</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+    );
+  }
 
   // =======================================================================================
   // MAIN UI
@@ -1078,7 +1228,6 @@ export default function AssessmentScreen() {
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.container}>
-
         {/* Header */}
         <View style={styles.topBar}>
           <View style={styles.headerBox}>
@@ -1090,18 +1239,16 @@ export default function AssessmentScreen() {
 
           <View style={styles.headerBox}>
             <Text style={styles.headerLabel}>Time Left</Text>
-            <Text style={[styles.headerValue, { color: timer < 60 ? "red" : "#007bff" }]}>
+            <Text
+              style={[
+                styles.headerValue,
+                { color: timer < 60 ? "red" : "#007bff" },
+              ]}
+            >
               {formatTime(timer)}
             </Text>
           </View>
         </View>
-
-
-
-       
-
-
-
         {/* Question */}
         <ScrollView style={{ flex: 1 }}>
           <QuestionComponent
@@ -1111,8 +1258,8 @@ export default function AssessmentScreen() {
           />
         </ScrollView>
 
-{/* Unanswered Navigator */}
-{unanswered.length > 0 && (
+        {/* Unanswered Navigator */}
+        {unanswered.length > 0 && (
           <View style={styles.questionNavigator}>
             <Text style={styles.unansweredTitle}>Unanswered Questions</Text>
 
@@ -1154,10 +1301,11 @@ export default function AssessmentScreen() {
             <Text style={styles.navButtonText}>← Previous</Text>
           </TouchableOpacity>
 
-
-
           {currentIndex === questions.length - 1 ? (
-            <TouchableOpacity style={styles.submitFinalBtn} onPress={handleSubmit}>
+            <TouchableOpacity
+              style={styles.submitFinalBtn}
+              onPress={handleSubmit}
+            >
               <Text style={styles.submitFinalText}>Submit</Text>
             </TouchableOpacity>
           ) : (
@@ -1166,14 +1314,10 @@ export default function AssessmentScreen() {
             </TouchableOpacity>
           )}
         </View>
- 
       </View>
     </SafeAreaView>
   );
 }
-
-
-
 
 // =======================================================================================
 // STYLES
@@ -1258,7 +1402,6 @@ const styles = StyleSheet.create({
   },
   submitFinalText: { color: "#fff", fontWeight: "700" },
 
-
   // Unanswered
   questionNavigator: {
     backgroundColor: "#fff",
@@ -1290,5 +1433,54 @@ const styles = StyleSheet.create({
   },
   questionDotText: { color: "#ff5555", fontWeight: "700" },
   questionDotTextActive: { color: "#fff" },
+  card: {
+    backgroundColor: "#fff",
+    padding: 25,
+    borderRadius: 16,
+    width: "90%",
+    elevation: 6, // Android shadow
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    alignItems: "center",
+  },
 
+  completeTitle: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#222",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+
+  completeSubtitle: {
+    fontSize: 18,
+    color: "#555",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+
+  percentageTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginVertical: 12,
+    textAlign: "center",
+  },
+
+  restartBtn: {
+    backgroundColor: "#007bff",
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 15,
+    width: "90%",
+    alignItems: "center",
+  },
+
+  restartText: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "700",
+  },
 });

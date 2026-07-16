@@ -1,6 +1,6 @@
 import { URLS } from '@/constants/urls';
 import { apiClient } from '@/services/api';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -85,9 +85,13 @@ export default function UnitTopicsScreen() {
   };
 
 
-  const handleUnitPress = (unitId) => {
+  const handleUnitPress = (topicId) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setSelectedUnitId((prev) => (prev === unitId ? null : unitId));
+    // setSelectedUnitId((prev) => (prev === unitId ? null : unitId));
+       router.push({
+                  pathname: "/screens/StudyQuestions",
+                  params: { subjectId: subjectId, topicId: topicId },
+                });
   };
 
   const handleTopicPress = (topic) => {
@@ -132,9 +136,9 @@ export default function UnitTopicsScreen() {
             </View>
             <Text style={styles.unitTitle}>{item.topic_name}</Text>
           </View>
-          <Ionicons
-            name={isExpanded ? 'chevron-up-outline' : 'chevron-down-outline'}
-            size={22}
+          <Feather
+            name={'arrow-right-circle'}
+            size={28}
             color="#4b5563"
           />
         </TouchableOpacity>

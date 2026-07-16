@@ -115,7 +115,11 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { Alert } from 'react-native';
+import { router } from 'expo-router';
+import { showAppAlert } from '../components/AppAlert';
+
+// Note: modal alert UI is provided by `components/AppAlert.tsx`.
+// Call `showAppAlert(title, message, buttons?)` to display a single app modal.
 
 // Create axios instance
 const api = axios.create({
@@ -138,7 +142,7 @@ api.interceptors.request.use(
 
       console.log(
         '\n🟢 [API REQUEST]',
-        '\nURL: ', config.baseURL + config.url,
+        '\nURL: ', (config.baseURL ?? '') + (config.url ?? ''),
         '\nMethod:', config.method?.toUpperCase(),
         '\nHeaders:', config.headers,
         '\nParams:', config.params,
@@ -163,7 +167,7 @@ api.interceptors.response.use(
   (response) => {
     console.log(
       '\n✅ [API RESPONSE]',
-      '\nURL:', response.config.baseURL + response.config.url,
+      '\nURL:', (response.config.baseURL ?? '') + (response.config.url ?? ''),
       '\nStatus:', response.status,
       '\nData:', response.data,
       '\n───────────────────────────────'
@@ -171,9 +175,9 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
-    console.error(
+    console.log(
       '\n🚨 [API ERROR]',
-      '\nURL:', error?.config?.baseURL + error?.config?.url,
+      '\nURL:', (error?.config?.baseURL ?? '') + (error?.config?.url ?? ''),
       '\nStatus:', error?.response?.status,
       '\nData:', error?.response?.data,
       '\nMessage:', error?.message,
@@ -184,11 +188,23 @@ api.interceptors.response.use(
       error?.response?.data?.message ||
       'Something went wrong. Please try again.';
 
-    Alert.alert('Error', message, [{ text: 'OK', style: 'cancel' }]);
+    showAppAlert('Error', message, [
+      {
+        text: 'OK',
+        style: 'cancel',
+        onPress: () => router.back(),
+      },
+    ]);
 
     if (error.response?.status === 401) {
       await AsyncStorage.removeItem('userToken');
-      Alert.alert('Session expired', 'Please log in again.');
+      showAppAlert('Session expired', 'Please log in again.', [
+        {
+          text: 'OK',
+          style: 'cancel',
+          onPress: () => router.replace('/(auth)/login'),
+        },
+      ]);
       // optionally trigger navigation here
     }
 
@@ -198,42 +214,42 @@ api.interceptors.response.use(
 
 // 🧩 API methods
 export const apiClient = {
-  get: async (endpoint, params = {}) => {
+  get: async (endpoint: string, params: any = {}) => {
     try {
       const response = await api.get(endpoint, { params });
       return response.data;
-    } catch (error) {
-      console.error('❌ GET Error:', error.message);
+    } catch (error: any) {
+      console.error('❌ GET Error:', error?.message ?? String(error));
       throw error;
     }
   },
 
-  post: async (endpoint, data = {}) => {
+  post: async (endpoint: string, data: any = {}) => {
     try {
       const response = await api.post(endpoint, data);
       return response.data;
-    } catch (error) {
-      console.error('❌ POST Error:', error.message);
+    } catch (error: any) {
+      console.error('❌ POST Error:', error?.message ?? String(error), data);
       throw error;
     }
   },
 
-  put: async (endpoint, data = {}) => {
+  put: async (endpoint: string, data: any = {}) => {
     try {
       const response = await api.put(endpoint, data);
       return response.data;
-    } catch (error) {
-      console.error('❌ PUT Error:', error.message);
+    } catch (error: any) {
+      console.error('❌ PUT Error:', error?.message ?? String(error));
       throw error;
     }
   },
 
-  delete: async (endpoint) => {
+  delete: async (endpoint: string) => {
     try {
       const response = await api.delete(endpoint);
       return response.data;
-    } catch (error) {
-      console.error('❌ DELETE Error:', error.message);
+    } catch (error: any) {
+      console.error('❌ DELETE Error:', error?.message ?? String(error));
       throw error;
     }
   },
