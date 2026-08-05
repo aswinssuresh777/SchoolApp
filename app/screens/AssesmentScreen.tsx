@@ -842,11 +842,35 @@ const mockData = {
 // =======================================================================================
 const QuestionComponent = ({ question, selectedOption, onSelectOption }) => {
   if (!question) return null;
+const renderQuestion = (text = '') => {
+  // No mark tag → render normally
+  if (!text.includes('<mark>')) {
+    return <Text style={styles.questionText}>{text}</Text>;
+  }
+
+  const parts = text.split(/(<mark>.*?<\/mark>)/g);
+
+  return (
+    <Text style={styles.questionText}>
+      {parts.map((part, index) => {
+        if (part.startsWith('<mark>')) {
+          return (
+            <Text key={index} style={styles.boldText}>
+              {part.replace(/<\/?mark>/g, '')}
+            </Text>
+          );
+        }
+
+        return <Text key={index} style={styles.questionText}>{part}</Text>;
+      })}
+    </Text>
+  );
+};
 
   return (
     <View style={styles.questionBox}>
       <Text style={styles.topicName}>Topic: {question.topic_name}</Text>
-      <Text style={styles.questionText}>{question.question_text}</Text>
+      {renderQuestion(question.question_text)}
 
       {question.options?.map((opt) => {
         const isSelected = selectedOption === opt.option_id;
@@ -908,42 +932,6 @@ export default function AssessmentScreen() {
   const [timer, setTimer] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [assessmentResponse, setAssessmentResponse] = useState({
-    assessment: {
-      percentage: 20,
-      score: 1,
-      session_id: "cfb0372a-f2ad-459c-9539-7f8e6620661b",
-      status: "Completed",
-      total_marks: 5,
-    },
-    error: false,
-    message: "Answers submitted successfully and assessment completed",
-    results: [
-      {
-        is_correct: false,
-        marks_obtained: 0,
-        question_id: "7b5d6b7e-1c48-4c7a-ae84-b7dca8dcf901",
-      },
-      {
-        is_correct: true,
-        marks_obtained: 1,
-        question_id: "9fa281cf-3db5-4da3-a849-1fb8d8a35e68",
-      },
-      {
-        is_correct: false,
-        marks_obtained: 0,
-        question_id: "d3d008ba-d95b-43ab-a5d8-cd99e98d8f7b",
-      },
-      {
-        is_correct: false,
-        marks_obtained: 0,
-        question_id: "e3c289ab-6d23-480b-960c-a88b4be5f2c2",
-      },
-      {
-        is_correct: false,
-        marks_obtained: 0,
-        question_id: "bd8e2c48-65c8-4dd0-92f5-b8ec9da4469b",
-      },
-    ],
   });
   const { state } = useUser();
   const { userData } = state;
@@ -951,6 +939,7 @@ export default function AssessmentScreen() {
     selectedTopics,
     questionCount = 5,
     subjectId,
+    activeAssesment
   } = useLocalSearchParams() ?? {};
   const parsedSelectedTopics: string[] = selectedTopics
   ? JSON.parse(selectedTopics as string)
@@ -1038,8 +1027,49 @@ export default function AssessmentScreen() {
     setLoading(false);
   };
 
+  const loadActiveAssesment = async () => {
+    setLoading(true);
+    const payload = {
+      class_subject_id: subjectId,
+      question_count: questionCount,
+      units: parsedSelectedTopics,
+    };
+    console.log("payloa d", payload);
+    try {
+      const response = await apiClient.get(URLS.ACTIVE_ASSESMENT);
+      if (!(response as any).error) {
+        setTimer(response?.assessment?.time_limit_minutes * 60);
+        setAssessmentInfo(response.assessment);
+        setQuestions(response.questions);
+        setLoading(false);
+      }
+
+      console.log(response);
+    } catch (error) {
+      // Alert.alert(
+      //   "Cannot Generate Assessment",
+      //   "There is an active assessment. Complete it to create new one.",
+      //   [
+      //     {
+      //       text: "OK",
+      //       style: "cancel",
+      //       onPress: () => router.back()   // ➤ Go back when OK is pressed
+      //     }
+      //   ]
+      // );
+      console.log("Error calling API:", error);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
+    if(activeAssesment)
+    {
+      loadActiveAssesment()
+    }
+    else{
     loadAssessment();
+    }
   }, []);
 
   // =======================================================================================
@@ -1120,6 +1150,13 @@ export default function AssessmentScreen() {
   };
 
   const goPrev = () => {
+     const q = questions[currentIndex];
+    
+    if (!answers[q.question_id]) {
+      setUnanswered((prev) =>
+        prev.includes(currentIndex) ? prev : [...prev, currentIndex]
+      );
+    }
     recordTimeForCurrentQuestion();
     if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
   };
@@ -1128,7 +1165,7 @@ export default function AssessmentScreen() {
   // SUBMIT
   // =======================================================================================
   const handleSubmit = async () => {
-    if (unanswered.length > 0) {
+    if (unanswered?.length > 0) {
       Alert.alert(
         "You have unanswered questions please complete it to Submit Assesment"
       );
@@ -1259,12 +1296,12 @@ export default function AssessmentScreen() {
         </ScrollView>
 
         {/* Unanswered Navigator */}
-        {unanswered.length > 0 && (
+        {unanswered?.length > 0 && (
           <View style={styles.questionNavigator}>
             <Text style={styles.unansweredTitle}>Unanswered Questions</Text>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {unanswered.map((idx) => (
+              {unanswered?.map((idx) => (
                 <TouchableOpacity
                   key={idx}
                   onPress={() => setCurrentIndex(idx)}
@@ -1301,9 +1338,10 @@ export default function AssessmentScreen() {
             <Text style={styles.navButtonText}>← Previous</Text>
           </TouchableOpacity>
 
-          {currentIndex === questions.length - 1 ? (
+          {currentIndex === questions.length -1 ? (
             <TouchableOpacity
-              style={styles.submitFinalBtn}
+              style={[styles.submitFinalBtn,{ backgroundColor:unanswered?.length!==0? "#a4f3b6":"#28a745",}]}
+              disabled={unanswered?.length!==0}
               onPress={handleSubmit}
             >
               <Text style={styles.submitFinalText}>Submit</Text>
@@ -1349,7 +1387,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  questionText: { fontSize: 17, fontWeight: "600", marginBottom: 16 },
+  questionText: { fontSize: 17, fontWeight: "400", marginBottom: 16 },
   topicName: { color: "#007bff", fontWeight: "700", marginBottom: 6 },
 
   option: {
@@ -1482,5 +1520,8 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 17,
     fontWeight: "700",
+  },
+   boldText: {
+    fontWeight: '700', // or 'bold'
   },
 });

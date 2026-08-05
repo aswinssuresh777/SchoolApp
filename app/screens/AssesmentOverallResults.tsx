@@ -1,19 +1,19 @@
 // App.js - Improved Assessment History Screen
-import React, { useState, useCallback, useEffect } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  StatusBar,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
-import { apiClient } from "@/services/api";
 import { URLS } from "@/constants/urls";
+import { apiClient } from "@/services/api";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const mockData = {
   assessments: [
@@ -283,9 +283,9 @@ export default function AssesmentOverallResults() {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Text style={styles.headerTitle}>Assessment History</Text>
-          <TouchableOpacity style={styles.filterButton}>
+          {/* <TouchableOpacity style={styles.filterButton}>
             <Ionicons name="filter" size={20} color="#64748B" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {/* Summary Stats */}

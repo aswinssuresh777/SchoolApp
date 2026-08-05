@@ -139,99 +139,98 @@ setIsLoading(true);
       }}>
         <ActivityIndicator size="large" color="blue" />
       </View>:
-<View>
-      {/* Quick Stats */}
-      {/* <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{subjectData?.length}</Text>
-          <Text style={styles.statLabel}>Subjects</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>45</Text>
-          <Text style={styles.statLabel}>Topics</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>66%</Text>
-          <Text style={styles.statLabel}>Progress</Text>
-        </View>
-      </View> */}
+<View style={styles.section}>
+  <Text style={styles.sectionTitle}>Choose Your Subject</Text>
 
-      {/* Subjects */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Subjects</Text>
-        <ScrollView
-          // horizontal
-          // showsHorizontalScrollIndicator={false}
-          style={styles.subjectsContainer}
-          contentContainerStyle={{ paddingRight: 16 }} // ✅ fix for last item visibility
-        >
-          {subjectData?.map((subject) => (
-            <TouchableOpacity
-              key={subject.subject_id}
-              style={[styles.subjectCard, { borderLeftColor: 'lightblue' }]}
-              onPress={()=>{
-                router.push({
-                  pathname: "/screens/unitTopicsScreen",
-                  params: { subjectId: subject.class_subject_id },
-                });
-                
-              }}
-            >
-              {/* <MaterialCommunityIcons
-                name={subject.icon}
+  <ScrollView
+    showsVerticalScrollIndicator={false}
+    contentContainerStyle={styles.subjectContainer}>
+    {subjectData?.map((subject, index) => {
+      const iconBg = [
+        '#EEF2FF',
+        '#DBEAFE',
+        '#DCFCE7',
+        '#FEF3C7',
+        '#FEE2E2',
+      ];
+
+      const iconColor = [
+        '#6366F1',
+        '#2563EB',
+        '#10B981',
+        '#F59E0B',
+        '#EF4444',
+      ];
+
+      const icons = [
+        'book-outline',
+        'calculator-outline',
+        'flask-outline',
+        'earth-outline',
+        'language-outline',
+      ];
+
+      return (
+        <TouchableOpacity
+          activeOpacity={0.9}
+          key={subject.subject_id}
+          style={styles.subjectCard}
+          onPress={() =>
+            router.push({
+              pathname: '/screens/unitTopicsScreen',
+              params: {
+                subjectId: subject.class_subject_id,
+              },
+            })
+          }>
+          <View style={styles.row}>
+            <View
+              style={[
+                styles.iconBox,
+                {
+                  backgroundColor: iconBg[index % 5],
+                },
+              ]}>
+              <Ionicons
+                name={icons[index % 5]}
                 size={24}
-                color={subject.color}
-              /> */}
-              <Text style={styles.subjectName}>{subject.subject_name}</Text>
-              {/* <Text style={styles.subjectTopics}>{subject.topics} topics</Text> */}
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    { width: `${subject.progress}%`, backgroundColor: subject.color },
-                  ]}
-                />
-              </View>
-              <Text style={styles.progressText}>{subject.progress??0}% complete</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+                color={iconColor[index % 5]}
+              />
+            </View>
 
-      {/* Study Materials */}
-      {/* <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Recent Materials</Text>
-        <ScrollView style={styles.materialsList} showsVerticalScrollIndicator={false}>
-          {studyMaterials.map((material) => (
-            <TouchableOpacity key={material.id} style={styles.materialCard}>
-              <View style={styles.materialLeft}>
-                <View style={styles.materialIcon}>
-                  <Ionicons
-                    name={
-                      material.type === 'Video'
-                        ? 'play-circle'
-                        : material.type === 'Article'
-                        ? 'document-text'
-                        : 'help-circle'
-                    }
-                    size={20}
-                    color="#666"
-                  />
-                </View>
-                <View style={styles.materialInfo}>
-                  <Text style={styles.materialTitle}>{material.title}</Text>
-                  <Text style={styles.materialSubject}>{material.subject}</Text>
-                </View>
-              </View>
-              <View style={styles.materialRight}>
-                <Text style={styles.materialDuration}>{material.duration}</Text>
-                <Ionicons name="chevron-forward" size={16} color="#999" />
-              </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View> */}
-      </View>
+            <View style={styles.content}>
+              <Text style={styles.subjectName}>
+                {subject.subject_name}
+              </Text>
+
+              <Text style={styles.subjectDesc}>
+                Physics • Chemistry • Biology
+              </Text>
+            </View>
+
+            {/* <Ionicons
+              name="chevron-forward"
+              size={20}
+              color="#94A3B8"
+            /> */}
+          </View>
+
+          <View style={styles.startButton}>
+            <Text style={styles.startText}>
+              Start Learning
+            </Text>
+
+            <Ionicons
+              name="arrow-forward"
+              size={15}
+              color="#4F46E5"
+            />
+          </View>
+        </TouchableOpacity>
+      );
+    })}
+  </ScrollView>
+</View>
       }
     </SafeAreaView>
   );
@@ -270,30 +269,30 @@ const styles = StyleSheet.create({
   },
   statNumber: { fontSize: 24, fontWeight: '700', color: '#1A1A1A' },
   statLabel: { fontSize: 12, color: '#666', marginTop: 4 },
-  section: { marginTop: 24 },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    paddingHorizontal: 16,
-    marginBottom: 12,
-  },
+  // section: { marginTop: 24 },
+  // sectionTitle: {
+  //   fontSize: 18,
+  //   fontWeight: '600',
+  //   color: '#1A1A1A',
+  //   paddingHorizontal: 16,
+  //   marginBottom: 12,
+  // },
   subjectsContainer: { paddingLeft: 16 },
-  subjectCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 16,
-    margin: 10,
-    // marginRight: 12,
-    // width: 140,
-    borderLeftWidth: 4,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-  },
-  subjectName: { fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginTop: 8 },
+  // subjectCard: {
+  //   backgroundColor: '#FFF',
+  //   borderRadius: 16,
+  //   padding: 16,
+  //   margin: 10,
+  //   // marginRight: 12,
+  //   // width: 140,
+  //   borderLeftWidth: 4,
+  //   elevation: 1,
+  //   shadowColor: '#000',
+  //   shadowOffset: { width: 0, height: 1 },
+  //   shadowOpacity: 0.05,
+  //   shadowRadius: 2,
+  // },
+  // subjectName: { fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginTop: 8 },
   subjectTopics: { fontSize: 12, color: '#666', marginTop: 2 },
   progressBar: {
     height: 4,
@@ -332,6 +331,93 @@ const styles = StyleSheet.create({
   materialSubject: { fontSize: 12, color: '#666', marginTop: 2 },
   materialRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   materialDuration: { fontSize: 12, color: '#666' },
+  section: {
+  flex: 1,
+  paddingHorizontal: 20,
+  marginTop: 18,
+},
+
+sectionTitle: {
+  fontSize: 20,
+  fontWeight: '700',
+  color: '#0F172A',
+  marginBottom: 20,
+},
+
+subjectContainer: {
+  paddingBottom: 30,
+},
+
+subjectCard: {
+  backgroundColor: '#FFF',
+
+  borderRadius: 20,
+
+  padding: 18,
+
+  marginBottom: 16,
+
+  borderWidth: 1,
+
+  borderColor: '#EEF2F7',
+
+  // shadowColor: '#000',
+
+  shadowOpacity: 0.05,
+
+  shadowRadius: 12,
+
+  shadowOffset: {
+    width: 0,
+    height: 4,
+  },
+
+  elevation: 1.5,
+},
+
+row: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+iconBox: {
+  width: 54,
+  height: 54,
+  borderRadius: 16,
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginRight: 15,
+},
+
+content: {
+  flex: 1,
+},
+
+subjectName: {
+  fontSize: 18,
+  fontWeight: '700',
+  color: '#111827',
+},
+
+subjectDesc: {
+  fontSize: 13,
+  color: '#6B7280',
+  marginTop: 4,
+},
+
+startButton: {
+  marginTop: 14,
+  alignSelf: 'flex-end',
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+startText: {
+  color: '#4F46E5',
+  fontWeight: '700',
+  fontSize: 14,
+  marginRight: 6,
+},
 });
 
 export default StudyScreen;
