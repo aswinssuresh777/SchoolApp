@@ -200,10 +200,6 @@ setIsLoading(true);
                    <Text style={styles.subjectName}>
                      {subject.subject_name}
                    </Text>
-     
-                   <Text style={styles.subjectDesc}>
-                     Physics • Chemistry • Biology
-                   </Text>
                  </View>
      
                  {/* <Ionicons

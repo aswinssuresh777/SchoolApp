@@ -165,13 +165,13 @@ api.interceptors.request.use(
 // 🧩 Response Interceptor
 api.interceptors.response.use(
   (response) => {
-    console.log(
-      '\n✅ [API RESPONSE]',
-      '\nURL:', (response.config.baseURL ?? '') + (response.config.url ?? ''),
-      '\nStatus:', response.status,
-      '\nData:', response.data,
-      '\n───────────────────────────────'
-    );
+    // console.log(
+    //   '\n✅ [API RESPONSE]',
+    //   '\nURL:', (response.config.baseURL ?? '') + (response.config.url ?? ''),
+    //   '\nStatus:', response.status,
+    //   '\nData:',JSON.stringify(response.data),
+    //   '\n───────────────────────────────'
+    // );
     return response;
   },
   async (error) => {

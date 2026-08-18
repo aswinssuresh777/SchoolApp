@@ -647,7 +647,7 @@ import { URLS } from "@/constants/urls";
 import { useUser } from "@/context/UserContext";
 import { apiClient } from "@/services/api";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -660,198 +660,457 @@ import {
   Text,
   TouchableOpacity,
   View,
+  useColorScheme
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { WebView } from "react-native-webview";
+
 
 // =======================================================================================
-// MOCK DATA
+// LATEX / HTML HELPERS
 // =======================================================================================
-const mockData = {
-  error: false,
-  message: "Assessment generated successfully",
-  assessment: {
-    session_id: "2f99f5f5-ef80-4138-ad09-b66596aa23ed",
-    session_name: "Tamil Assessment - 11/20/2025",
-    total_questions: 5,
-    total_marks: 5,
-    time_limit_minutes: 5,
-    started_at: "2025-11-20T05:11:32.509Z",
-    end_time: "2025-11-20T05:16:32.509Z",
-  },
-  questions: [
-    {
-      question_id: "d3d008ba-d95b-43ab-a5d8-cd99e98d8f7b",
-      question_text:
-        "வேர்ச்சொல்லை, மனச்சொல்லை, மாறிமாறாடை ஆகியவற்றைக் குறிப்பிடும் பயிறிவழை—",
-      question_type: "MCQ",
-      difficulty_level: "Easy",
-      marks: 1,
-      topic_name: "அறிவியல், தொழில்நுட்பம்",
-      options: [
-        {
-          option_id: "d5e8271c-c301-4b6e-9b11-709d16afbb74",
-          option_text: "குலை வாக்கு",
-          option_letter: "A",
-        },
-        {
-          option_id: "fd6024d4-38cd-4f49-a9ba-82957f9c7828",
-          option_text: "மனை வாக்கு",
-          option_letter: "B",
-        },
-        {
-          option_id: "8b3c1a6a-5a47-4d95-8098-3d22ce01afec",
-          option_text: "கொடுத்த வாக்கு",
-          option_letter: "C",
-        },
-        {
-          option_id: "0a50bbfb-470c-4f18-9dd3-e948c0ad6e18",
-          option_text: "விலை வாக்கு",
-          option_letter: "D",
-        },
-      ],
-    },
-    {
-      question_id: "bd8e2c48-65c8-4dd0-92f5-b8ec9da4469b",
-      question_text:
-        "‘கேட்டவர் மகிழப் பாடிய பாடல் இது’ — தொடரில் இடம்பெற்றுள்ள தொழிற்பெயரும் விளைவாய்பெயரும் பெறும் முதலியே—",
-      question_type: "MCQ",
-      difficulty_level: "Easy",
-      marks: 1,
-      topic_name: "அறிவியல், தொழில்நுட்பம்",
-      options: [
-        {
-          option_id: "90d83c6c-d04c-4fd1-9ac6-202db58737f2",
-          option_text: "பாடப்; கேட்டவர்",
-          option_letter: "A",
-        },
-        {
-          option_id: "297fb626-2c7b-48f8-8e8e-1d9e48d5a066",
-          option_text: "பாடல்; பாடிய",
-          option_letter: "B",
-        },
-        {
-          option_id: "8df35cb9-b63e-4de4-a286-2fcfd615513b",
-          option_text: "கேட்டவர்; பாடப்",
-          option_letter: "C",
-        },
-        {
-          option_id: "ae02f56d-825e-44b4-b445-7d35ede3b64d",
-          option_text: "பாடல்; கேட்டவர்",
-          option_letter: "D",
-        },
-      ],
-    },
-    {
-      question_id: "e3c289ab-6d23-480b-960c-a88b4be5f2c2",
-      question_text:
-        "‘காப்பாய் இலையையும் காப்பாய் தோளையும்’ அடிக்கோட்டுப் பகுதி குறிப்பு பெறுவது—",
-      question_type: "MCQ",
-      difficulty_level: "Easy",
-      marks: 1,
-      topic_name: "அறிவியல், தொழில்நுட்பம்",
-      options: [
-        {
-          option_id: "c89e6a75-3127-4957-afbb-59639393faef",
-          option_text: "இலைவும் சருகும்",
-          option_letter: "A",
-        },
-        {
-          option_id: "67224255-8f8b-4b78-a0bc-278c102ef889",
-          option_text: "தோளையம் சண்டும்",
-          option_letter: "B",
-        },
-        {
-          option_id: "0c370c24-b3d8-4a87-b25e-dca184f1d17a",
-          option_text: "தாழும் ஒளையும்",
-          option_letter: "C",
-        },
-        {
-          option_id: "18f6a4f7-86d9-4ec8-a283-6672d284aece",
-          option_text: "சருகும் சண்டும்",
-          option_letter: "D",
-        },
-      ],
-    },
-    {
-      question_id: "9fa281cf-3db5-4da3-a849-1fb8d8a35e68",
-      question_text: "எந்தநூனா என்பதைப் பிரித்தால் இவ்வாறு வரும்—",
-      question_type: "MCQ",
-      difficulty_level: "Easy",
-      marks: 1,
-      topic_name: "அறிவியல், தொழில்நுட்பம்",
-      options: [
-        {
-          option_id: "d71048d3-8dc3-4ae0-9eee-0d19f885e1fb",
-          option_text: "எ + தமிழ் + நா",
-          option_letter: "A",
-        },
-        {
-          option_id: "cf5cd754-d84d-4d52-a0b6-a9bcab4815cd",
-          option_text: "எந்த + தமிழ் + நா",
-          option_letter: "B",
-        },
-        {
-          option_id: "51bef075-e396-4f0b-bd7b-533da2dc6d04",
-          option_text: "எம் + தமிழ் + நா",
-          option_letter: "C",
-        },
-        {
-          option_id: "e6f0b3c0-f0e4-4a2f-93b6-1a239a09d610",
-          option_text: "எந்தம் + தமிழ் + நா",
-          option_letter: "D",
-        },
-      ],
-    },
-    {
-      question_id: "7b5d6b7e-1c48-4c7a-ae84-b7dca8dcf901",
-      question_text:
-        "‘மெத்த வணிகலை’ என்னும் தொழிலில் தமிழ்மொழியாளர் குறைப்பது எது?",
-      question_type: "MCQ",
-      difficulty_level: "Easy",
-      marks: 1,
-      topic_name: "அறிவியல், தொழில்நுட்பம்",
-      options: [
-        {
-          option_id: "d6671b0f-630d-4b82-8525-9ad7e05fb499",
-          option_text: "வணிகக் கம்பெனிகளும் ஷாப்பிங்களும் காப்பியங்களும்",
-          option_letter: "A",
-        },
-        {
-          option_id: "913da1cf-77a2-4cc0-a2ec-198aa45d0490",
-          option_text: "பெரும் வணிகமும் பெரும் கலைகளும்",
-          option_letter: "B",
-        },
-        {
-          option_id: "3adb3f17-fb05-4cf0-9f7d-815e3cb43385",
-          option_text: "ஷாப்பிங்கு காப்பியங்களும் அலங்கணங்களும்",
-          option_letter: "C",
-        },
-        {
-          option_id: "fb61feb0-cf47-4dcb-afe1-73f2cb52df92",
-          option_text: "வணிகக் கம்பெனிகள் அலங்கணங்களும்",
-          option_letter: "D",
-        },
-      ],
-    },
-  ],
+
+const escapeHtmlText = (text = "") => {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 };
-// (I removed the long mock to shorten; keep your own full mock)
+
+/**
+ * Keeps LaTeX untouched while escaping normal HTML text.
+ *
+ * Supports:
+ * $...$
+ * $$...$$
+ * \(...\)
+ * \[...\]
+ *
+ * Also converts:
+ * <mark>text</mark>
+ * into bold text.
+ */
+const prepareContentForMathJax = (content = "") => {
+  let text = String(content || "");
+
+  // Convert your existing <mark>...</mark> into <strong>...</strong>
+  text = text.replace(
+    /<mark>([\s\S]*?)<\/mark>/gi,
+    (_, value) => `__MARK_START__${value}__MARK_END__`
+  );
+
+  /*
+   * Split normal text and LaTeX.
+   *
+   * IMPORTANT:
+   * We do NOT HTML escape LaTeX because LaTeX can contain
+   * characters such as &, { }, etc.
+   */
+  const mathRegex =
+    /(\$\$[\s\S]*?\$\$|\$[^$\n]+?\$|\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\\])/g;
+
+  const parts = text.split(mathRegex);
+
+  return parts
+    .map((part) => {
+      const isMath =
+        /^\$\$[\s\S]*\$\$$/.test(part) ||
+        /^\$[^$\n]+?\$$/.test(part) ||
+        /^\\\([\s\S]*\\\)$/.test(part) ||
+        /^\\\[[\s\S]*\\\]$/.test(part);
+
+      if (isMath) {
+        return part;
+      }
+
+      let escaped = escapeHtmlText(part);
+
+      escaped = escaped
+        .replace(
+          /__MARK_START__([\s\S]*?)__MARK_END__/g,
+          "<strong>$1</strong>"
+        );
+
+      return escaped;
+    })
+    .join("");
+};
+
+// =======================================================================================
+// MATH RENDERER
+// =======================================================================================
+
+type MathRendererProps = {
+  content?: string;
+  fontSize?: number;
+  textColor?: string;
+  onHeightChange?: (height: number) => void;
+  backgroundColor?: string
+};
+
+const MathRenderer = ({
+  content = "",
+  fontSize = 17,
+  textColor,
+  onHeightChange,
+  backgroundColor='transparent',
+}: MathRendererProps) => {
+  const colorScheme = useColorScheme();
+
+  const [height, setHeight] = useState(0);
+
+  const finalTextColor =
+    textColor ||
+    (colorScheme === "dark"
+      ? "#FFFFFF"
+      : "#222222");
+
+  const html = useMemo(() => {
+    const preparedContent = prepareContentForMathJax(content);
+
+    return `
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta
+  name="viewport"
+  content="width=device-width,
+  initial-scale=1.0,
+  maximum-scale=1.0,
+  user-scalable=no"
+/>
+
+<script>
+
+window.MathJax = {
+
+  tex: {
+
+    inlineMath: [
+      ['$', '$'],
+      ['\\\\(', '\\\\)']
+    ],
+
+    displayMath: [
+      ['$$', '$$'],
+      ['\\\\[', '\\\\]']
+    ],
+
+    processEscapes: true,
+
+    processEnvironments: true,
+
+    packages: {
+      '[+]': [
+        'ams',
+        'newcommand',
+        'configmacros'
+      ]
+    }
+
+  },
+
+  svg: {
+    fontCache: 'global'
+  }
+
+};
+
+</script>
+
+<script
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+</script>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+
+  width: 100%;
+
+background-color: ${backgroundColor};
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+
+  font-size: ${fontSize}px;
+//  text-align:center;
+  line-height: 1.55;
+  overflow-x: hidden;
+
+  overflow-y: hidden;
+
+  word-wrap: break-word;
+
+  overflow-wrap: break-word;
+}
+
+#content {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+// text-align: center;
+}
+
+strong {
+
+  font-weight: 700;
+
+}
+
+/*
+ * Inline equations
+ */
+
+mjx-container[jax="SVG"] {
+
+  vertical-align: middle;
+
+  max-width: 100% !important;
+
+}
+
+/*
+ * Large/display equations
+ *
+ * If the equation is wider than the screen,
+ * it will scroll horizontally.
+ */
+
+mjx-container[display="true"] {
+
+  margin: 12px 0 !important;
+
+  max-width: 100% !important;
+
+  overflow-x: auto !important;
+
+  overflow-y: hidden !important;
+
+  padding: 4px 0;
+
+  -webkit-overflow-scrolling: touch;
+
+}
+
+/*
+ * Prevent horizontal page overflow
+ */
+
+mjx-container {
+
+  max-width: 100% !important;
+
+}
+
+::-webkit-scrollbar {
+
+  width: 0;
+  height: 0;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="content">
+  ${preparedContent}
+</div>
+
+<script>
+
+function sendHeight() {
+  const content = document.getElementById("content");
+
+  const height = content
+    ? content.getBoundingClientRect().height
+    : document.body.scrollHeight;
+
+  window.ReactNativeWebView.postMessage(
+    JSON.stringify({
+      type: "height",
+      height: Math.ceil(height),
+    })
+  );
+}
+
+function renderMath() {
+
+  if (
+    typeof MathJax === "undefined" ||
+    !MathJax.typesetPromise
+  ) {
+
+    setTimeout(renderMath, 100);
+
+    return;
+
+  }
+
+  MathJax.typesetPromise()
+    .then(() => {
+
+      setTimeout(() => {
+
+        sendHeight();
+
+      }, 100);
+
+    })
+    .catch((error) => {
+
+      window.ReactNativeWebView.postMessage(
+        JSON.stringify({
+          type: "error",
+          error: String(error)
+        })
+      );
+
+    });
+
+}
+
+window.addEventListener(
+  "load",
+  renderMath
+);
+
+setTimeout(
+  renderMath,
+  500
+);
+
+</script>
+
+</body>
+
+</html>
+`;
+  }, [
+    content,
+    fontSize,
+    finalTextColor,
+    backgroundColor
+  ]);
+
+  return (
+    <View
+      style={[
+        styles.mathRendererContainer,
+        {
+          minHeight: height,
+        },
+      ]}
+    >
+      <WebView
+        source={{
+          html,
+        }}
+        originWhitelist={["*"]}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        scrollEnabled={false}
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        bounces={false}
+        overScrollMode="never"
+        backgroundColor="transparent"
+        automaticallyAdjustContentInsets={false}
+        style={{
+
+          width: "100%",
+          height: height || 1,
+          opacity: height > 0 ? 1 : 0,
+        }}
+        pointerEvents="none"
+        onMessage={(event) => {
+          try {
+            const data = JSON.parse(
+              event.nativeEvent.data
+            );
+
+            if (data.type === "height") {
+              const newHeight = Math.ceil(
+                Number(data.height)
+              );
+
+              if (
+                newHeight > 0 &&
+                newHeight < 5000
+              ) {
+                setHeight(newHeight);
+
+                onHeightChange?.(
+                  newHeight
+                );
+              }
+            }
+
+            if (data.type === "error") {
+              console.log(
+                "MathJax error:",
+                data.error
+              );
+            }
+          } catch (error) {
+            console.log(
+              "MathRenderer message error:",
+              error
+            );
+          }
+        }}
+        onError={(error) => {
+          console.log(
+            "Math WebView error:",
+            error.nativeEvent
+          );
+        }}
+      />
+    </View>
+  );
+};
+
+
 
 // =======================================================================================
 // QUESTION COMPONENT
 // =======================================================================================
 const QuestionComponent = ({ question, selectedOption, onSelectOption }) => {
   if (!question) return null;
-const renderQuestion = (text = '') => {
-  // No mark tag → render normally
-  if (!text.includes('<mark>')) {
-    return <Text style={styles.questionText}>{text}</Text>;
-  }
+  const renderQuestion = (text = '') => {
+    // No mark tag → render normally
+    if (text.includes('<mark>')) {
+      return <Text style={styles.questionText}>{text}</Text>;
+    }
 
-  const parts = text.split(/(<mark>.*?<\/mark>)/g);
+    const parts = text.split(/(<mark>.*?<\/mark>)/g);
 
-  return (
-    <Text style={styles.questionText}>
+    return (
+      <>
+        {/* <Text style={styles.questionText}>
       {parts.map((part, index) => {
         if (part.startsWith('<mark>')) {
           return (
@@ -864,8 +1123,18 @@ const renderQuestion = (text = '') => {
         return <Text key={index} style={styles.questionText}>{part}</Text>;
       })}
     </Text>
-  );
-};
+     */}
+        <View style={styles.questionContent}>
+          <MathRenderer
+            content={
+              question.question_text || ""
+            }
+            fontSize={17}
+          />
+        </View>
+      </>
+    );
+  };
 
   return (
     <View style={styles.questionBox}>
@@ -882,6 +1151,7 @@ const renderQuestion = (text = '') => {
             onPress={() => onSelectOption(opt.option_id)}
             activeOpacity={0.7}
           >
+            {/* <>
             <View style={styles.optionBadge}>
               <Text style={styles.optionBadgeText}>{opt.option_letter}</Text>
             </View>
@@ -894,6 +1164,55 @@ const renderQuestion = (text = '') => {
             >
               {opt.option_text}
             </Text>
+            </> */}
+            {/* OPTION LETTER */}
+
+            <View
+              style={[
+                styles.optionBadge,
+                isSelected &&
+                styles.optionBadgeSelected,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.optionBadgeText,
+                  isSelected && styles.optionTextSelected,
+                ]}
+              >
+                {opt.option_letter}
+              </Text>
+            </View>
+
+            {/* OPTION CONTENT */}
+
+            <View
+              style={[
+                styles.optionContent,
+                {
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: 'center',
+                },
+              ]}
+            >
+              <MathRenderer
+                content={
+                  opt.option_text || ""
+                }
+                fontSize={16}
+                textColor={
+                  isSelected
+                    ? "#FFFFFF"
+                    : "#222222"
+                }
+                backgroundColor={
+                  isSelected
+                    ? "#007bff" : 'transparent'
+
+                }
+              />
+            </View>
           </TouchableOpacity>
         );
       })}
@@ -901,25 +1220,6 @@ const renderQuestion = (text = '') => {
   );
 };
 
-// =======================================================================================
-// MOCK API FORMAT EXACTLY LIKE BACKEND
-// =======================================================================================
-const fetchAssessmentData = async () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        error: false,
-        message: "Assessment generated successfully",
-        assessment: mockData.assessment,
-        questions: mockData.questions,
-      });
-    }, 300);
-  });
-};
-
-// =======================================================================================
-// MAIN SCREEN
-// =======================================================================================
 export default function AssessmentScreen() {
   const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState([]);
@@ -942,8 +1242,8 @@ export default function AssessmentScreen() {
     activeAssesment
   } = useLocalSearchParams() ?? {};
   const parsedSelectedTopics: string[] = selectedTopics
-  ? JSON.parse(selectedTopics as string)
-  : [];
+    ? JSON.parse(selectedTopics as string)
+    : [];
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [timeSpent, setTimeSpent] = useState({});
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -1063,12 +1363,11 @@ export default function AssessmentScreen() {
   };
 
   useEffect(() => {
-    if(activeAssesment)
-    {
+    if (activeAssesment) {
       loadActiveAssesment()
     }
-    else{
-    loadAssessment();
+    else {
+      loadAssessment();
     }
   }, []);
 
@@ -1150,8 +1449,8 @@ export default function AssessmentScreen() {
   };
 
   const goPrev = () => {
-     const q = questions[currentIndex];
-    
+    const q = questions[currentIndex];
+
     if (!answers[q.question_id]) {
       setUnanswered((prev) =>
         prev.includes(currentIndex) ? prev : [...prev, currentIndex]
@@ -1338,10 +1637,10 @@ export default function AssessmentScreen() {
             <Text style={styles.navButtonText}>← Previous</Text>
           </TouchableOpacity>
 
-          {currentIndex === questions.length -1 ? (
+          {currentIndex === questions.length - 1 ? (
             <TouchableOpacity
-              style={[styles.submitFinalBtn,{ backgroundColor:unanswered?.length!==0? "#a4f3b6":"#28a745",}]}
-              disabled={unanswered?.length!==0}
+              style={[styles.submitFinalBtn, { backgroundColor: unanswered?.length !== 0 ? "#a4f3b6" : "#28a745", }]}
+              disabled={unanswered?.length !== 0}
               onPress={handleSubmit}
             >
               <Text style={styles.submitFinalText}>Submit</Text>
@@ -1388,7 +1687,6 @@ const styles = StyleSheet.create({
   },
 
   questionText: { fontSize: 17, fontWeight: "400", marginBottom: 16 },
-  topicName: { color: "#007bff", fontWeight: "700", marginBottom: 6 },
 
   option: {
     borderWidth: 2,
@@ -1404,19 +1702,18 @@ const styles = StyleSheet.create({
     borderColor: "#007bff",
   },
 
-  optionBadge: {
-    width: 26,
-    height: 26,
-    backgroundColor: "#007bff",
-    borderRadius: 13,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  optionBadgeText: { color: "#fff", fontWeight: "700" },
+  // optionBadge: {
+  //   width: 26,
+  //   height: 26,
+  //   backgroundColor: "#007bff",
+  //   borderRadius: 13,
+  //   justifyContent: "center",
+  //   alignItems: "center",
+  //   marginRight: 12,
+  // },
 
   optionText: { fontSize: 15, flex: 1 },
-  optionTextSelected: { color: "#fff" },
+  optionTextSelected: { color: "#0c0101" },
 
   navigationRow: { flexDirection: "row", gap: 12, marginTop: 12 },
 
@@ -1521,7 +1818,67 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "700",
   },
-   boldText: {
+  boldText: {
     fontWeight: '700', // or 'bold'
   },
+  // =====================================================================================
+  // QUESTION
+  // =====================================================================================
+
+
+  topicName: {
+    color: "#007bff",
+    fontWeight: "700",
+    marginBottom: 8,
+    fontSize: 14,
+  },
+
+  questionContent: {
+    width: "100%",
+    marginBottom: 14,
+  },
+
+  mathRendererContainer: {
+    width: "100%",
+    backgroundColor: "transparent",
+    // justifyContent:"center",
+    // alignItems:"center"
+  },
+
+  // =====================================================================================
+  // OPTIONS
+  // =====================================================================================
+
+
+  optionBadge: {
+    width: 30,
+    height: 30,
+
+    backgroundColor: "#007bff",
+
+    borderRadius: 15,
+
+    justifyContent: "center",
+    alignItems: "center",
+
+    marginRight: 12,
+
+    flexShrink: 0,
+  },
+
+  optionBadgeSelected: {
+    backgroundColor: "#ffffff",
+  },
+
+  optionBadgeText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+
+  optionContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+
 });
